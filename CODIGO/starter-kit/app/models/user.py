@@ -4,6 +4,7 @@ from enum import Enum as PyEnum
 
 from sqlalchemy import Column, DateTime, Enum, String, Boolean
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
@@ -27,3 +28,5 @@ class User(Base):
     is_superuser = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), default=datetime.utcnow)
     updated_at = Column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    restaurants = relationship("Restaurant", back_populates="owner", cascade="all, delete-orphan")

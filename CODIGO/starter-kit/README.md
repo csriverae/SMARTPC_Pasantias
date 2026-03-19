@@ -1,34 +1,134 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# MesaPass v2 - Backend
 
-## Getting Started
+Backend del proyecto MesaPass v2 (FastAPI, SQLAlchemy, PostgreSQL) desplegado en `app/`.
 
-First, run the development server:
+## Estructura del proyecto
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
+```
+app/
+├── main.py
+├── core/
+│   ├── config.py
+│   ├── security.py
+├── db/
+│   ├── base.py
+│   ├── session.py
+├── models/
+│   ├── user.py
+│   ├── restaurant.py
+├── schemas/
+│   ├── auth.py
+│   ├── restaurant.py
+├── routers/
+│   ├── auth.py
+│   ├── restaurants.py
+│   ├── __init__.py
+├── services/
+│   ├── users.py
+│   ├── auth_service.py
+│   ├── restaurants.py
+├── dependencies/
+│   ├── auth.py
+├── utils/
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Requisitos
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Python 3.12+
+- PostgreSQL
+- Dependencias Python:
+  - fastapi
+  - uvicorn
+  - sqlalchemy>=2.0
+  - asyncpg
+  - alembic
+  - pydantic>=2.0
+  - python-jose
+  - passlib[bcrypt]
+  - python-dotenv
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+## Configuración de entorno
 
-## Learn More
+Crea el archivo `.env` en la raíz con:
 
-To learn more about Next.js, take a look at the following resources:
+```
+DATABASE_URL=postgresql+asyncpg://<user>:<password>@<host>:<port>/<database>
+JWT_SECRET_KEY=super-secret-key
+JWT_ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=15
+REFRESH_TOKEN_EXPIRE_MINUTES=10080
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+##  Ejecutar localmente
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+1. Instalar dependencias:
 
-## Deploy on Vercel
+```bash
+pip install -r requirements.txt
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. Iniciar servidor:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+```bash
+uvicorn app.main:app --reload
+```
+
+3. Abrir Swagger:
+
+- `http://127.0.0.1:8000/docs`
+
+## Módulo Auth + User + JWT
+
+### Endpoints
+
+- `POST /auth/register`
+- `POST /auth/login`
+- `POST /auth/refresh`
+- `GET /auth/me`
+
+### Flujo
+
+1. Registrar y loguear usuario.
+2. Recibir token `access` + `refresh`.
+3. Usar `Authorization: Bearer <access_token>` en requests protegidos.
+
+## Módulo Restaurants
+
+### Endpoints
+
+- `POST /restaurants`
+- `GET /restaurants`
+- `GET /restaurants/{id}`
+- `PUT /restaurants/{id}`
+- `PATCH /restaurants/{id}/deactivate`
+
+### Reglas
+
+- Solo `restaurant_admin` y `super_admin` pueden crear/gestionar.
+- RUC único.
+- Acceso por propietario (restaurant_admin ve solo los suyos).
+
+##  Arquitectura 3 capas
+
+- `routers` -> rutas API
+- `services` -> lógica negocio
+- `models` -> SQLAlchemy
+- `schemas` -> validación y respuestas Pydantic
+- `dependencies` -> control auth/roles
+
+##  Próximos módulos
+
+- Invitation Codes
+- Companies
+- Agreements
+- Employees
+- QR Module
+- Meal Logs
+- Reports
+
+##  Notas
+
+- No modificar la carpeta `src/` (frontend existente).
+- Implementar migraciones con Alembic antes de probar.
+- Es recomendable agregar tests con `pytest`.
+
