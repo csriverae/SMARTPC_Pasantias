@@ -1,7 +1,8 @@
 from pathlib import Path
 from typing import Optional
 
-from pydantic import BaseSettings, PostgresDsn, field_validator
+from pydantic import PostgresDsn, field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 
@@ -11,7 +12,7 @@ class Settings(BaseSettings):
     ENV: str = "development"
 
     # Database
-    DATABASE_URL: PostgresDsn
+    DATABASE_URL: str
 
     # JWT
     JWT_SECRET_KEY: str
@@ -19,9 +20,7 @@ class Settings(BaseSettings):
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 15
     REFRESH_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7
 
-    class Config:
-        env_file = BASE_DIR / ".env"
-        case_sensitive = True
+    model_config = SettingsConfigDict(env_file=BASE_DIR / ".env", case_sensitive=True)
 
     @field_validator("DATABASE_URL")
     @classmethod
