@@ -1,14 +1,5 @@
-export const metadata = {
-  title: 'Home',
-  description: 'Home page'
-}
+import { redirect } from 'next/navigation'
 
-const HomePage = () => {
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <h1 className="text-4xl font-bold text-center">Home funcionando</h1>
-    </div>
-  )
+export default function HomePage() {
+  redirect('/')
 }
-
-export default HomePage
