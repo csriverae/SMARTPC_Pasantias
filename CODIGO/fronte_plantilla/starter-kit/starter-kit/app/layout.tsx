@@ -1,16 +1,40 @@
+// MUI Imports
+import InitColorSchemeScript from '@mui/material/InitColorSchemeScript'
+
+// Third-party Imports
+import 'react-perfect-scrollbar/dist/css/styles.css'
+
+// Util Imports
+import { getSystemMode } from '@core/utils/serverHelpers'
+
+// Style Imports
+import '@/app/globals.css'
+
+// Generated Icon CSS Imports
+import '@assets/iconify-icons/generated-icons.css'
+import '@core/styles/globals.css'
+
 export const metadata = {
-  title: 'App',
-  description: 'My app'
+  title: 'Mesapass - Sistema de Gestión de Restaurantes',
+  description: 'Mesapass - Plataforma integrada para restaurantes y empresas de catering'
 }
 
-export default function RootLayout({
+const RootLayout = async ({
   children,
 }: {
   children: React.ReactNode
-}) {
+}) => {
+  const systemMode = await getSystemMode()
+  const direction = 'ltr'
+
   return (
-    <html lang="es">
-      <body>{children}</body>
+    <html id='__next' lang='es' dir={direction} suppressHydrationWarning>
+      <body className='flex is-full min-bs-full flex-auto flex-col'>
+        <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
+        {children}
+      </body>
     </html>
   )
 }
+
+export default RootLayout

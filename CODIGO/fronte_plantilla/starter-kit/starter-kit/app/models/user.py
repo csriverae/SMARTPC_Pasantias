@@ -1,10 +1,22 @@
-from sqlalchemy import Column, Integer, String
+from sqlalchemy import Column, Integer, String, Enum
+from sqlalchemy.orm import relationship
 from app.db.base import Base
+import enum
+
+
+class UserRole(str, enum.Enum):
+    admin = "admin"
+    restaurant_admin = "restaurant_admin"
+    company_admin = "company_admin"
+    employee = "employee"
 
 
 class User(Base):
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
+    password = Column(String, nullable=False)
+    role = Column(Enum(UserRole), nullable=False)
+
+    restaurants = relationship("Restaurant", back_populates="user")

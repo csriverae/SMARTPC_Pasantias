@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from app.core.config import settings
 
-# Conexión fija (segunda DB solicitada): mesa_db
-DATABASE_URL = "postgresql://postgres:1234@localhost:5434/mesa_db"
+DATABASE_URL = settings.DATABASE_URL
 print("DATABASE_URL:", DATABASE_URL)
 
 engine = create_engine(

@@ -8,7 +8,10 @@ from alembic import context
 
 # Import Base and models for autogenerate support
 from app.db.base import Base
-from app.models.user import User
+from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog
+from app.core.config import Settings
+
+settings = Settings()
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -43,7 +46,7 @@ def run_migrations_offline() -> None:
     script output.
 
     """
-    url = "postgresql://postgres:postgres@localhost:5432/mesapass"
+    url = settings.DATABASE_URL
     context.configure(
         url=url,
         target_metadata=target_metadata,
@@ -62,7 +65,7 @@ def run_migrations_online() -> None:
     and associate a connection with the context.
 
     """
-    connectable = create_engine("postgresql://postgres:postgres@localhost:5432/mesapass")
+    connectable = create_engine(settings.DATABASE_URL)
 
     with connectable.connect() as connection:
         context.configure(

@@ -1,9 +1,7 @@
-const LoginPage = () => {
-  return (
-    <div>
-      <h1>Login funcionando</h1>
-    </div>
-  )
-}
+'use client'
 
-export default LoginPage
+import Login from '@/src/views/Login'
+
+export default function LoginPage() {
+  return <Login />
+}
