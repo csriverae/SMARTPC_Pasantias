@@ -10,7 +10,6 @@ export const metadata = {
 }
 
 const LoginPage = async () => {
-  // Vars
   const mode = await getServerMode()
 
   return <LoginV2 mode={mode} />
