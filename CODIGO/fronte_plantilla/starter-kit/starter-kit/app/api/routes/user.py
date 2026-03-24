@@ -1,10 +1,21 @@
 from typing import List
+from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
 from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email
-from app.core.security import create_access_token
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    get_current_user,
+    require_roles,
+    verify_token,
+)
+
+
+class RefreshTokenRequest(BaseModel):
+    refresh_token: str
 
 
 router = APIRouter()
@@ -43,8 +54,16 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
                 detail="Incorrect email or password",
                 headers={"WWW-Authenticate": "Bearer"},
             )
-        access_token = create_access_token(data={"sub": db_user.email})
-        return {"access_token": access_token, "token_type": "bearer"}
+
+        token_data = {"sub": db_user.email, "role": str(db_user.role)}
+        access_token = create_access_token(data=token_data)
+        refresh_token = create_refresh_token(data=token_data)
+
+        return {
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+        }
     except HTTPException:
         raise
     except Exception as e:
@@ -52,8 +71,35 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
 
 
+@router.post("/refresh", response_model=Token)
+def refresh_token(refresh: RefreshTokenRequest, db: Session = Depends(get_db)):
+    payload = verify_token(refresh.refresh_token)
+    if payload is None or payload.get("sub") is None:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid refresh token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+
+    user = get_user_by_email(db, payload.get("sub"))
+    if user is None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
+
+    token_data = {"sub": user.email, "role": str(user.role)}
+    return {
+        "access_token": create_access_token(data=token_data),
+        "refresh_token": create_refresh_token(data=token_data),
+        "token_type": "bearer",
+    }
+
+
+@router.get("/me", response_model=UserResponse)
+def get_current_user_endpoint(current_user=Depends(get_current_user)):
+    return current_user
+
+
 @router.get("/users", response_model=List[UserResponse])
-def get_users_endpoint(db: Session = Depends(get_db)):
+def get_users_endpoint(current_user=Depends(require_roles("admin")), db: Session = Depends(get_db)):
     try:
         return get_users(db)
     except Exception as e:
