@@ -2,6 +2,7 @@ from typing import List
 from pydantic import BaseModel
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+import traceback
 from app.db.session import SessionLocal
 from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
 from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email
@@ -41,6 +42,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         print(f"Registration error: {e}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Registration error: {str(e)}")
 
 
@@ -68,6 +70,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         raise
     except Exception as e:
         print(f"Login error: {e}")
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
 
 
