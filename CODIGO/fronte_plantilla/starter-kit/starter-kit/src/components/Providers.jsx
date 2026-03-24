@@ -1,10 +1,8 @@
-// Context Imports
-import { VerticalNavProvider } from '@menu/contexts/verticalNavContext'
-import { SettingsProvider } from '@core/contexts/settingsContext'
-import ThemeProvider from '@components/theme'
-
 // Util Imports
 import { getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers'
+
+// Component Imports
+import ClientProviders from '@components/ClientProviders'
 
 const Providers = async props => {
   // Props
@@ -16,13 +14,14 @@ const Providers = async props => {
   const systemMode = await getSystemMode()
 
   return (
-    <VerticalNavProvider>
-      <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
-        <ThemeProvider direction={direction} systemMode={systemMode}>
-          {children}
-        </ThemeProvider>
-      </SettingsProvider>
-    </VerticalNavProvider>
+    <ClientProviders
+      settingsCookie={settingsCookie}
+      mode={mode}
+      systemMode={systemMode}
+      direction={direction}
+    >
+      {children}
+    </ClientProviders>
   )
 }
 

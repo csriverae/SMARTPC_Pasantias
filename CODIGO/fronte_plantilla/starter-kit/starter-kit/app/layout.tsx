@@ -7,10 +7,11 @@ import 'react-perfect-scrollbar/dist/css/styles.css'
 // Util Imports
 import { getSystemMode } from '@core/utils/serverHelpers'
 
-// Style Imports
-import '@/app/globals.css'
+// Component Imports
+import Providers from '@components/Providers'
 
-// Generated Icon CSS Imports
+// Style Imports - Import from src with correct paths
+import '@/app/globals.css'
 import '@assets/iconify-icons/generated-icons.css'
 import '@core/styles/globals.css'
 
@@ -31,7 +32,9 @@ const RootLayout = async ({
     <html id='__next' lang='es' dir={direction} suppressHydrationWarning>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
-        {children}
+        <Providers direction={direction}>
+          {children}
+        </Providers>
       </body>
     </html>
   )
