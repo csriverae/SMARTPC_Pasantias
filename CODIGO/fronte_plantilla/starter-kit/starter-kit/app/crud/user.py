@@ -1,18 +1,11 @@
 from sqlalchemy.orm import Session
 from app.models.user import User
 from app.schemas.user import UserCreate
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+from app.core.security import get_password_hash, verify_password
 
 
 def create_user(db: Session, user: UserCreate) -> User:
-    # Ensure password is not too long for bcrypt (max 72 bytes)
-    password = user.password
-    if len(password.encode('utf-8')) > 72:
-        password = password[:72]
-    
-    hashed_password = pwd_context.hash(password)
+    hashed_password = get_password_hash(user.password)
     db_user = User(email=user.email, password=hashed_password, role=user.role)
     db.add(db_user)
     db.commit()
@@ -32,8 +25,6 @@ def authenticate_user(db: Session, email: str, password: str) -> User | None:
     user = get_user_by_email(db, email)
     if not user:
         return None
-    # Truncate password for bcrypt compatibility
-    password = password[:72]
-    if not pwd_context.verify(password, user.password):
+    if not verify_password(password, user.password):
         return None
     return user

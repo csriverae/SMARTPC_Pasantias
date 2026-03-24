@@ -7,7 +7,6 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.core.config import settings
-from app.crud.user import get_user_by_email
 from app.db.session import SessionLocal
 
 SECRET_KEY = settings.SECRET_KEY
@@ -18,6 +17,20 @@ REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
+
+
+def get_password_hash(password: str) -> str:
+    # Truncate password to 72 bytes for bcrypt compatibility
+    password_bytes = password.encode('utf-8')[:72]
+    password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.hash(password)
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    # Truncate password to 72 bytes for bcrypt compatibility
+    password_bytes = plain_password.encode('utf-8')[:72]
+    plain_password = password_bytes.decode('utf-8', errors='ignore')
+    return pwd_context.verify(plain_password, hashed_password)
 
 
 def get_db() -> Generator:
@@ -59,6 +72,7 @@ def verify_token(token: str) -> dict[str, Any] | None:
 
 
 def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
+    from app.crud.user import get_user_by_email
     payload = verify_token(token)
     if payload is None or payload.get("sub") is None:
         raise HTTPException(
