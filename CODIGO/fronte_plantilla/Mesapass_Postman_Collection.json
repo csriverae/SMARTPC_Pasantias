@@ -141,6 +141,32 @@
         }
       },
       "response": []
+    },
+    {
+      "name": "Delete User (Admin Only)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": {
+          "raw": "http://localhost:8000/auth/users/{{user_id}}",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "auth",
+            "users",
+            "{{user_id}}"
+          ]
+        }
+      },
+      "response": []
     }
   ],
   "variable": [
