@@ -1,12 +1,18 @@
 from sqlalchemy.orm import Session
-from app.models.user import User
+from app.models.user import User, UserRole
 from app.schemas.user import UserCreate
 from app.core.security import get_password_hash, verify_password
 
 
 def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = get_password_hash(user.password)
-    db_user = User(email=user.email, password=hashed_password, role=user.role)
+    role = user.role if user.role else UserRole.employee
+    db_user = User(
+        email=user.email,
+        password=hashed_password,
+        full_name=user.full_name,
+        role=role
+    )
     db.add(db_user)
     db.commit()
     db.refresh(db_user)

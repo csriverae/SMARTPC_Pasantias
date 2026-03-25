@@ -5,7 +5,8 @@ from app.models.user import UserRole
 class UserCreate(BaseModel):
     email: str
     password: str
-    role: UserRole
+    full_name: str | None = None
+    role: UserRole | None = None
 
 
 class UserResponse(BaseModel):
@@ -13,6 +14,7 @@ class UserResponse(BaseModel):
     
     id: int
     email: str
+    full_name: str | None = None
     role: UserRole
 
 

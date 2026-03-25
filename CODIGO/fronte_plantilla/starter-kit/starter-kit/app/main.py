@@ -31,6 +31,11 @@ app.add_middleware(
 app.include_router(router, prefix="/auth", tags=["auth"])
 
 
+@app.get("/")
+async def root():
+    return {"message": "Welcome to MesaPass API", "docs": "/docs"}
+
+
 @app.get("/health")
 async def health():
     return {"status": "ok"}

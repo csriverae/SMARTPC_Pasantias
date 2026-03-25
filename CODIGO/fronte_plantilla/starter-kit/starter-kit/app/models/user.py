@@ -17,6 +17,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
-    role = Column(Enum(UserRole), nullable=False)
+    full_name = Column(String, nullable=True)
+    role = Column(Enum(UserRole), nullable=False, default=UserRole.employee)
 
     restaurants = relationship("Restaurant", back_populates="user")
