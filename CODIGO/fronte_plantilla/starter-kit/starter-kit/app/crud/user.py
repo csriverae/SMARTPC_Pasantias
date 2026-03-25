@@ -7,10 +7,16 @@ from app.core.security import get_password_hash, verify_password
 def create_user(db: Session, user: UserCreate) -> User:
     hashed_password = get_password_hash(user.password)
     role = user.role if user.role else UserRole.employee
+    full_name = user.full_name
+    if not full_name:
+        first = getattr(user, 'first_name', None) or ''
+        last = getattr(user, 'last_name', None) or ''
+        full_name = f"{first} {last}".strip() or None
+
     db_user = User(
         email=user.email,
         password=hashed_password,
-        full_name=user.full_name,
+        full_name=full_name,
         role=role
     )
     db.add(db_user)
