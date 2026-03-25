@@ -94,7 +94,7 @@ def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
 def require_roles(*allowed_roles: str):
     def role_checker(current_user=Depends(get_current_user)):
         user_role = getattr(current_user, "role", None)
-        if user_role is None or str(user_role) not in allowed_roles:
+        if user_role is None or user_role.value not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Operation not permitted for your role",

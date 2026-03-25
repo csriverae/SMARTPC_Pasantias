@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 import traceback
 from app.db.session import SessionLocal
 from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
-from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email
+from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email, delete_user
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -57,7 +57,7 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        token_data = {"sub": db_user.email, "role": str(db_user.role)}
+        token_data = {"sub": db_user.email, "role": db_user.role.value}
         access_token = create_access_token(data=token_data)
         refresh_token = create_refresh_token(data=token_data)
 
@@ -88,7 +88,7 @@ def refresh_token(refresh: RefreshTokenRequest, db: Session = Depends(get_db)):
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
-    token_data = {"sub": user.email, "role": str(user.role)}
+    token_data = {"sub": user.email, "role": user.role.value}
     return {
         "access_token": create_access_token(data=token_data),
         "refresh_token": create_refresh_token(data=token_data),
@@ -108,3 +108,14 @@ def get_users_endpoint(current_user=Depends(require_roles("admin")), db: Session
     except Exception as e:
         print(f"Get users error: {e}")
         raise HTTPException(status_code=500, detail=f"Get users error: {str(e)}")
+
+
+@router.delete("/users/{user_id}")
+def delete_user_endpoint(user_id: int, current_user=Depends(require_roles("admin")), db: Session = Depends(get_db)):
+    try:
+        if not delete_user(db, user_id):
+            raise HTTPException(status_code=404, detail="User not found")
+        return {"message": "User deleted successfully"}
+    except Exception as e:
+        print(f"Delete user error: {e}")
+        raise HTTPException(status_code=500, detail=f"Delete user error: {str(e)}")
