@@ -59,8 +59,12 @@ const MaskImg = styled('img')({
 const LoginV2 = ({ mode }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [lastName, setLastName] = useState('')
+  const [role, setRole] = useState('employee')
   const [loading, setLoading] = useState(false)
 
   // Vars
@@ -122,34 +126,82 @@ const LoginV2 = ({ mode }) => {
             onSubmit={async (e) => {
               e.preventDefault()
               setLoading(true)
+
+              const apiUrl = isRegister ? 'http://localhost:8000/auth/register' : 'http://localhost:8000/auth/login'
+              const body = isRegister
+                ? JSON.stringify({
+                    email,
+                    password,
+                    first_name: firstName,
+                    last_name: lastName,
+                    role,
+                  })
+                : JSON.stringify({ email, password })
+
               try {
-                const response = await fetch('http://localhost:8000/auth/login', {
+                const response = await fetch(apiUrl, {
                   method: 'POST',
                   headers: {
                     'Content-Type': 'application/json',
                   },
-                  body: JSON.stringify({
-                    email,
-                    password
-                  }),
+                  body,
                 })
+
                 if (response.ok) {
                   const data = await response.json()
+                  if (isRegister) {
+                    alert('Usuario creado con éxito. Ahora puedes iniciar sesión.')
+                    setIsRegister(false)
+                    setFirstName('')
+                    setLastName('')
+                    setRole('employee')
+                    setPassword('')
+                    return
+                  }
+
                   localStorage.setItem('token', data.access_token)
                   router.push('/home')
                 } else {
                   const errorData = await response.json()
-                  alert(errorData.detail || 'Login failed')
+                  alert(errorData.detail || (isRegister ? 'Registro fallido' : 'Login fallido'))
                 }
               } catch (error) {
-                console.error('Login error:', error)
-                alert('Login error: ' + error.message)
+                console.error(isRegister ? 'Register error:' : 'Login error:', error)
+                alert((isRegister ? 'Registro error:' : 'Login error:') + ' ' + error.message)
               } finally {
                 setLoading(false)
               }
             }}
             className='flex flex-col gap-5'
           >
+            {isRegister && (
+              <>
+                <CustomTextField
+                  fullWidth
+                  label='First Name'
+                  placeholder='Enter your first name'
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                />
+                <CustomTextField
+                  fullWidth
+                  label='Last Name'
+                  placeholder='Enter your last name'
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                />
+                <CustomTextField
+                  fullWidth
+                  label='Role'
+                  placeholder='admin or employee'
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  required
+                />
+              </>
+            )}
             <CustomTextField 
               autoFocus 
               fullWidth 
@@ -187,12 +239,23 @@ const LoginV2 = ({ mode }) => {
               </Typography>
             </div>
             <Button fullWidth variant='contained' type='submit' disabled={loading}>
-              {loading ? 'Logging in...' : 'Login'}
+              {loading ? (isRegister ? 'Creating...' : 'Logging in...') : (isRegister ? 'Register' : 'Login')}
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
-              <Typography>New on our platform?</Typography>
-              <Typography component={Link} color='primary.main'>
-                Create an account
+              <Typography>{isRegister ? 'Already have an account?' : 'New on our platform?'}</Typography>
+              <Typography
+                component={Link}
+                color='primary.main'
+                onClick={() => {
+                  setIsRegister(!isRegister)
+                  setEmail('')
+                  setPassword('')
+                  setFirstName('')
+                  setLastName('')
+                  setRole('employee')
+                }}
+              >
+                {isRegister ? 'Go to login' : 'Create an account'}
               </Typography>
             </div>
             <Divider className='gap-2 text-textPrimary'>or</Divider>
