@@ -128,6 +128,7 @@ const LoginV2 = ({ mode }) => {
               setLoading(true)
 
               const apiUrl = isRegister ? 'http://localhost:8000/auth/register' : 'http://localhost:8000/auth/login'
+
               const body = isRegister
                 ? JSON.stringify({
                     email,
@@ -149,6 +150,7 @@ const LoginV2 = ({ mode }) => {
 
                 if (response.ok) {
                   const data = await response.json()
+
                   if (isRegister) {
                     alert('Usuario creado con éxito. Ahora puedes iniciar sesión.')
                     setIsRegister(false)
@@ -156,13 +158,37 @@ const LoginV2 = ({ mode }) => {
                     setLastName('')
                     setRole('employee')
                     setPassword('')
+
                     return
                   }
 
                   localStorage.setItem('token', data.access_token)
+
+                  if (data.refresh_token) {
+                    localStorage.setItem('refresh_token', data.refresh_token)
+                  }
+
+                  try {
+                    const meResponse = await fetch('http://localhost:8000/auth/me', {
+                      headers: {
+                        Authorization: `Bearer ${data.access_token}`,
+                        'Content-Type': 'application/json'
+                      }
+                    })
+
+                    if (meResponse.ok) {
+                      const currentUser = await meResponse.json()
+
+                      localStorage.setItem('user', JSON.stringify(currentUser))
+                    }
+                  } catch (err) {
+                    console.warn('No se pudo obtener el usuario después del login:', err)
+                  }
+
                   router.push('/home')
                 } else {
                   const errorData = await response.json()
+
                   alert(errorData.detail || (isRegister ? 'Registro fallido' : 'Login fallido'))
                 }
               } catch (error) {
