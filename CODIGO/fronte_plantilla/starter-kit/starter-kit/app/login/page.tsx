@@ -1,7 +1,9 @@
-'use client'
-
 import Login from '@views/Login'
+import { getServerMode } from '@core/utils/serverHelpers'
 
-export default function LoginPage() {
-  return <Login />
+const LoginPage = async () => {
+  const mode = await getServerMode()
+  return <Login mode={mode} />
 }
+
+export default LoginPage
