@@ -22,6 +22,7 @@ import Button from '@mui/material/Button'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
+import { useAuth } from '@core/contexts/UserContext'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({

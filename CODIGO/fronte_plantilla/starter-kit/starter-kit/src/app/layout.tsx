@@ -11,6 +11,7 @@ import { getSystemMode } from '@core/utils/serverHelpers'
 import '@/app/globals.css'
 import '@assets/iconify-icons/generated-icons.css'
 import '@core/styles/globals.css'
+import { AuthProvider } from '@core/contexts/UserContext'
 
 export const metadata = {
   title: 'Mesapass - Sistema de Gestión de Restaurantes',
@@ -29,7 +30,7 @@ const RootLayout = async ({
     <html id='__next' lang='es' dir={direction} suppressHydrationWarning>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         <InitColorSchemeScript attribute='data' defaultMode={systemMode} />
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   )
