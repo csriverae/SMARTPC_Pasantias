@@ -59,6 +59,10 @@ const MaskImg = styled('img')({
 const LoginV2 = ({ mode }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
   // Vars
   const darkImg = '/images/pages/auth-mask-dark.png'
@@ -116,19 +120,44 @@ const LoginV2 = ({ mode }) => {
           <form
             noValidate
             autoComplete='off'
-            onSubmit={e => {
+            onSubmit={async e => {
               e.preventDefault()
-              router.push('/')
+              setLoading(true)
+              setError('')
+              try {
+                const response = await fetch('http://localhost:8000/auth/login', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                  },
+                  body: new URLSearchParams({
+                    username: email,
+                    password: password,
+                  }),
+                })
+                const data = await response.json()
+                if (!response.ok) {
+                  throw new Error(data.message || 'Login failed')
+                }
+                localStorage.setItem('token', data.access_token)
+                router.push('/home')
+              } catch (err) {
+                setError(err.message)
+              } finally {
+                setLoading(false)
+              }
             }}
             className='flex flex-col gap-5'
           >
-            <CustomTextField autoFocus fullWidth label='Email or Username' placeholder='Enter your email or username' />
+            <CustomTextField autoFocus fullWidth label='Email or Username' placeholder='Enter your email or username' value={email} onChange={e => setEmail(e.target.value)} />
             <CustomTextField
               fullWidth
               label='Password'
               placeholder='············'
               id='outlined-adornment-password'
               type={isPasswordShown ? 'text' : 'password'}
+              value={password}
+              onChange={e => setPassword(e.target.value)}
               slotProps={{
                 input: {
                   endAdornment: (
@@ -147,8 +176,9 @@ const LoginV2 = ({ mode }) => {
                 Forgot password?
               </Typography>
             </div>
-            <Button fullWidth variant='contained' type='submit'>
-              Login
+            {error && <Typography color='error'>{error}</Typography>}
+            <Button fullWidth variant='contained' type='submit' disabled={loading}>
+              {loading ? 'Signing in...' : 'Sign in'}
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
               <Typography>New on our platform?</Typography>

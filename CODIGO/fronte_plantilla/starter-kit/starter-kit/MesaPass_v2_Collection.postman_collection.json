@@ -1,0 +1,843 @@
+{
+  "info": {
+    "name": "MesaPass v2 Backend - Multi-Tenant",
+    "description": "FastAPI multi-tenant backend collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Register",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 or 200\", function() {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property(\"message\");",
+                  "  pm.expect(jsonData).to.have.property(\"status\");",
+                  "  pm.expect(jsonData).to.have.property(\"error\");",
+                  "  pm.expect(jsonData).to.have.property(\"data\");",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"name\": \"Juan Pérez\",\\n  \"email\": \"juan@example.com\",\\n  \"password\": \"Password123!\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData).to.have.property(\"message\");",
+                  "  pm.expect(jsonData).to.have.property(\"status\");",
+                  "  pm.expect(jsonData).to.have.property(\"error\");",
+                  "  pm.expect(jsonData).to.have.property(\"data\");",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "});",
+                  "",
+                  "pm.test(\"Token exists\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.have.property(\"access_token\");",
+                  "});",
+                  "",
+                  "pm.test(\"Save token to environment\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.environment.set(\"token\", jsonData.data.access_token);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"email\": \"juan@example.com\",\\n  \"password\": \"Password123!\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Current User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "  pm.expect(jsonData.data).to.have.property(\"email\");",
+                  "  pm.expect(jsonData.data).to.have.property(\"name\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "me"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Login Error - Invalid Credentials",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 404\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Error response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.error).to.equal(true);",
+                  "  pm.expect(jsonData.message).to.include(\"El email o la contraseña\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"email\": \"invalid@example.com\",\\n  \"password\": \"WrongPassword\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tenants",
+      "item": [
+        {
+          "name": "Create Tenant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function() {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "  pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "});",
+                  "",
+                  "pm.test(\"Save tenant_id to environment\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.environment.set(\"tenant_id\", jsonData.data.id);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"name\": \"Grupo Gastronómico XYZ\",\\n  \"country\": \"Colombia\",\\n  \"currency\": \"COP\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List All Tenants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Tenant by ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Tenant object has required fields\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "  pm.expect(jsonData.data).to.have.property(\"name\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/tenants/{{tenant_id}}",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "tenants",
+                "{{tenant_id}}"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "User-Tenants",
+      "item": [
+        {
+          "name": "Add User to Tenant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function() {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"user_id\": \"{{user_id}}\",\\n  \"tenant_id\": \"{{tenant_id}}\",\\n  \"role\": \"admin\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/user-tenants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-tenants"
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get My User-Tenants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/user-tenants/me",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "user-tenants",
+                "me"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Companies",
+      "item": [
+        {
+          "name": "Create Company",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function() {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "  pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"name\": \"TechCorp SAS\",\\n  \"tenant_id\": \"{{tenant_id}}\",\\n  \"owner_id\": \"{{user_id}}\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/companies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Companies",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/companies",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "companies"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Restaurants",
+      "item": [
+        {
+          "name": "Create Restaurant",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function() {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "  pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"name\": \"La Cocina Bogotá\",\\n  \"tenant_id\": \"{{tenant_id}}\",\\n  \"owner_id\": \"{{user_id}}\",\\n  \"address\": \"Cra 7 # 45-23, Bogotá\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/restaurants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "restaurants"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Restaurants",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/restaurants",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "restaurants"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Agreements",
+      "item": [
+        {
+          "name": "Create Agreement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function() {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "  pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"company_id\": \"{{company_id}}\",\\n  \"restaurant_id\": \"{{restaurant_id}}\",\\n  \"tenant_id\": \"{{tenant_id}}\",\\n  \"terms\": \"Acuerdo de comidas gratuitas para empleados - 1 al día\",\\n  \"signed_at\": \"2026-03-27T10:00:00Z\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/agreements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "agreements"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Agreements",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/agreements",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "agreements"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Meal Logs",
+      "item": [
+        {
+          "name": "Create Meal Log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function() {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "",
+                  "pm.test(\"Response structure is valid\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.error).to.equal(false);",
+                  "  pm.expect(jsonData.data).to.have.property(\"id\");",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\\n  \"user_id\": \"{{user_id}}\",\\n  \"restaurant_id\": \"{{restaurant_id}}\",\\n  \"tenant_id\": \"{{tenant_id}}\",\\n  \"meal_type\": \"lunch\",\\n  \"consumed_at\": \"2026-03-27T12:30:00Z\"\\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/meal-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "meal-logs"
+              ]
+            }
+          }
+        },
+        {
+          "name": "List Meal Logs",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function() {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response is array\", function() {",
+                  "  var jsonData = pm.response.json();",
+                  "  pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/meal-logs",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "meal-logs"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "company_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "restaurant_id",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

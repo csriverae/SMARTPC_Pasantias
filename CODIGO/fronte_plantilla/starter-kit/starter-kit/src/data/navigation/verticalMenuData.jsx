@@ -1,7 +1,7 @@
 const verticalMenuData = () => [
   {
-    label: 'Home',
-    href: '/home',
+    label: 'Dashboard',
+    href: '/dashboard',
     icon: 'tabler-smart-home'
   },
   {

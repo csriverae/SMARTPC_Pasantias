@@ -1,0 +1,16 @@
+import uuid
+from sqlalchemy import Column, String, ForeignKey
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
+from backend.db.base import Base
+
+
+class Company(Base):
+    __tablename__ = "companies"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name = Column(String, nullable=False, unique=True)
+    owner_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+
+    owner = relationship("User", back_populates="companies")
+    agreements = relationship("Agreement", back_populates="company")
