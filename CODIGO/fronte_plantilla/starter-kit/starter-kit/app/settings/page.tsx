@@ -9,7 +9,11 @@ import { RoleBadge } from '@components/dashboard/RoleBadge'
 export default function SettingsPage() {
   const { user, loading, error } = useAuthUser()
   const [activeTab, setActiveTab] = useState<'account' | 'security' | 'preferences'>('account')
-  
+
+  if (loading) return <LoadingSpinner />
+  if (error) return <ErrorMessage title='Error Loading Settings' message={error} />
+  if (!user) return <ErrorMessage title='Not Authenticated' message='Please login first' />
+
   // Password change form state
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',

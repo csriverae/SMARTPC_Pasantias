@@ -57,7 +57,18 @@ export const useAuthUser = (): UseAuthUserReturn => {
       })
 
       if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`)
+        if (response.status === 401 || response.status === 403) {
+          localStorage.removeItem('token')
+          localStorage.removeItem('refresh_token')
+          localStorage.removeItem('user')
+          setError('Unauthorized. Please login again.')
+          setUser(null)
+          setLoading(false)
+          return
+        }
+
+        const errorText = await response.text()
+        throw new Error(`Error: ${response.status} ${response.statusText} ${errorText}`)
       }
 
       const userData = await response.json()
