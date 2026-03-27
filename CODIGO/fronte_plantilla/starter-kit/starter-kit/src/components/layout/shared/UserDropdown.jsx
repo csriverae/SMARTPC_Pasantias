@@ -1,7 +1,7 @@
 'use client'
 
 // React Imports
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 // Next Imports
 import { useRouter } from 'next/navigation'
@@ -37,6 +37,12 @@ const UserDropdown = () => {
   // States
   const [open, setOpen] = useState(false)
 
+  const [user, setUser] = useState({
+    full_name: 'John Doe',
+    email: 'admin@vuexy.com',
+    avatar: '/images/avatars/1.png'
+  })
+
   // Refs
   const anchorRef = useRef(null)
 
@@ -44,11 +50,65 @@ const UserDropdown = () => {
   const router = useRouter()
   const { settings } = useSettings()
 
+  useEffect(() => {
+    const loadUser = async () => {
+      const savedUser = localStorage.getItem('user')
+
+      if (savedUser) {
+        try {
+          const parsed = JSON.parse(savedUser)
+
+          if (parsed.email) {
+            setUser({
+              full_name: parsed.full_name || parsed.email,
+              email: parsed.email,
+              avatar: parsed.avatar || '/images/avatars/1.png'
+            })
+
+            return
+          }
+        } catch {
+          // Ignore parse errors
+        }
+      }
+
+      const token = localStorage.getItem('token')
+
+      if (!token) return
+
+      try {
+        const response = await fetch('http://localhost:8000/auth/me', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+
+          setUser({
+            full_name: data.full_name || data.email || 'John Doe',
+            email: data.email || 'admin@vuexy.com',
+            avatar: data.avatar || '/images/avatars/1.png'
+          })
+          localStorage.setItem('user', JSON.stringify(data))
+        }
+      } catch (error) {
+        console.error('User fetch error:', error)
+      }
+    }
+
+    loadUser()
+  }, [])
+
   const handleDropdownOpen = () => {
     !open ? setOpen(true) : setOpen(false)
   }
 
   const handleDropdownClose = (event, url) => {
+    setOpen(false)
+    
     if (url) {
       router.push(url)
     }
@@ -56,12 +116,12 @@ const UserDropdown = () => {
     if (anchorRef.current && anchorRef.current.contains(event?.target)) {
       return
     }
-
-    setOpen(false)
   }
 
   const handleUserLogout = async () => {
-    // Redirect to login page
+    localStorage.removeItem('token')
+    localStorage.removeItem('refresh_token')
+    localStorage.removeItem('user')
     router.push('/login')
   }
 
@@ -76,8 +136,8 @@ const UserDropdown = () => {
       >
         <Avatar
           ref={anchorRef}
-          alt='John Doe'
-          src='/images/avatars/1.png'
+          alt={user.full_name}
+          src={user.avatar}
           onClick={handleDropdownOpen}
           className='cursor-pointer bs-[38px] is-[38px]'
         />
@@ -101,28 +161,28 @@ const UserDropdown = () => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-6 gap-2' tabIndex={-1}>
-                    <Avatar alt='John Doe' src='/images/avatars/1.png' />
+                    <Avatar alt={user.full_name} src={user.avatar} />
                     <div className='flex items-start flex-col'>
                       <Typography className='font-medium' color='text.primary'>
-                        John Doe
+                        {user.full_name}
                       </Typography>
-                      <Typography variant='caption'>admin@vuexy.com</Typography>
+                      <Typography variant='caption'>{user.email}</Typography>
                     </div>
                   </div>
                   <Divider className='mlb-1' />
-                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e)}>
+                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/profile')}>
                     <i className='tabler-user' />
                     <Typography color='text.primary'>My Profile</Typography>
                   </MenuItem>
-                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e)}>
+                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/settings')}>
                     <i className='tabler-settings' />
                     <Typography color='text.primary'>Settings</Typography>
                   </MenuItem>
-                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e)}>
+                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pricing')}>
                     <i className='tabler-currency-dollar' />
                     <Typography color='text.primary'>Pricing</Typography>
                   </MenuItem>
-                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e)}>
+                  <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/faq')}>
                     <i className='tabler-help-circle' />
                     <Typography color='text.primary'>FAQ</Typography>
                   </MenuItem>
