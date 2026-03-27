@@ -107,15 +107,17 @@ const UserDropdown = () => {
   }
 
   const handleDropdownClose = (event, url) => {
+    setOpen(false)
+    
     if (url) {
-      router.push(url)
+      setTimeout(() => {
+        router.push(url)
+      }, 100)
     }
 
     if (anchorRef.current && anchorRef.current.contains(event?.target)) {
       return
     }
-
-    setOpen(false)
   }
 
   const handleUserLogout = async () => {

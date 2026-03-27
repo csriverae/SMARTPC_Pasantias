@@ -13,7 +13,7 @@ export default function Page() {
   if (!user) return <ErrorMessage title="Not Authenticated" message="Please login first" />
 
   return (
-    <div className='p-6 max-w-4xl mx-auto'>
+    <div className='p-6 max-w-full'>
       <div className='mb-8'>
         <h1 className='text-4xl font-bold text-slate-900 mb-2'>My Profile</h1>
         <p className='text-slate-500'>Manage your personal information and account settings</p>

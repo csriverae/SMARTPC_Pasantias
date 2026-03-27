@@ -52,7 +52,7 @@ export default function Page() {
 
   return (
     <div className='min-h-screen p-6'>
-      <div className='max-w-5xl mx-auto'>
+      <div className='max-w-full'>
         {/* Header */}
         <div className='text-center mb-12'>
           <h1 className='text-4xl font-bold text-slate-900 mb-4'>Simple, Transparent Pricing</h1>
