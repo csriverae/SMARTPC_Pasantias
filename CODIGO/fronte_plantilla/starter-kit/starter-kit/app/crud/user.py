@@ -5,7 +5,9 @@ from app.core.security import get_password_hash, verify_password
 
 
 def create_user(db: Session, user: UserCreate) -> User:
+    # Hash password using bcrypt directly (imported in security.py)
     hashed_password = get_password_hash(user.password)
+
     role = user.role if user.role else UserRole.employee
     full_name = user.full_name
     if not full_name:

@@ -20,6 +20,12 @@ class UserCreate(BaseModel):
         return combined or None
 
 
+class PasswordChangeRequest(BaseModel):
+    current_password: str
+    new_password: str
+    confirm_password: str
+
+
 class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     
