@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 import traceback
 from app.db.session import SessionLocal
-from app.schemas.user import UserCreate, UserResponse, UserLogin, Token
-from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email, delete_user
+from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, PasswordChangeRequest
+from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email, delete_user, update_user_password
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -119,3 +119,35 @@ def delete_user_endpoint(user_id: int, current_user=Depends(require_roles("admin
     except Exception as e:
         print(f"Delete user error: {e}")
         raise HTTPException(status_code=500, detail=f"Delete user error: {str(e)}")
+
+
+@router.post("/change-password")
+def change_password(password_change: PasswordChangeRequest, current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    try:
+        # Validate passwords match
+        if password_change.new_password != password_change.confirm_password:
+            raise HTTPException(status_code=400, detail="New passwords do not match")
+        
+        # Validate new password is not empty
+        if not password_change.new_password or len(password_change.new_password) < 6:
+            raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
+        
+        # Get fresh user from database using the new db session
+        from app.core.security import verify_password
+        user = get_user_by_email(db, current_user.email)
+        if not user:
+            raise HTTPException(status_code=404, detail="User not found")
+        
+        # Verify current password
+        if not verify_password(password_change.current_password, user.password):
+            raise HTTPException(status_code=401, detail="Current password is incorrect")
+        
+        # Update password
+        update_user_password(db, user, password_change.new_password)
+        return {"message": "Password changed successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        print(f"Change password error: {e}")
+        print(traceback.format_exc())
+        raise HTTPException(status_code=500, detail=f"Change password error: {str(e)}")

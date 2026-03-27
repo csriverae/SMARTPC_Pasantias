@@ -10,6 +10,69 @@ export default function Page() {
   const { user, loading, error } = useAuthUser()
   const [activeTab, setActiveTab] = useState('account')
 
+  // Password change form state
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
+  })
+  const [passwordLoading, setPasswordLoading] = useState(false)
+  const [passwordError, setPasswordError] = useState(null)
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault()
+    setPasswordError(null)
+    setPasswordSuccess(false)
+
+    // Validation
+    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
+      setPasswordError('All fields are required')
+      return
+    }
+
+    if (passwordForm.newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters')
+      return
+    }
+
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      setPasswordError('New passwords do not match')
+      return
+    }
+
+    try {
+      setPasswordLoading(true)
+      const token = localStorage.getItem('token')
+      
+      const response = await fetch('http://localhost:8000/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          current_password: passwordForm.currentPassword,
+          new_password: passwordForm.newPassword,
+          confirm_password: passwordForm.confirmPassword,
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json()
+        throw new Error(data.detail || 'Failed to change password')
+      }
+
+      setPasswordSuccess(true)
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
+      setTimeout(() => setPasswordSuccess(false), 5000)
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'An error occurred')
+    } finally {
+      setPasswordLoading(false)
+    }
+  }
+
   if (loading) return <LoadingSpinner />
   if (error) return <ErrorMessage title="Error Loading Settings" message={error} />
   if (!user) return <ErrorMessage title="Not Authenticated" message="Please login first" />
@@ -109,13 +172,29 @@ export default function Page() {
               {/* Change Password */}
               <div className='border-b border-slate-200 pb-6'>
                 <h3 className='text-lg font-semibold text-slate-900 mb-4'>Change Password</h3>
-                <form className='space-y-4'>
+                
+                {passwordSuccess && (
+                  <div className='mb-4 p-4 bg-green-50 border border-green-200 rounded-lg'>
+                    <p className='text-green-800'>✓ Password changed successfully!</p>
+                  </div>
+                )}
+                
+                {passwordError && (
+                  <div className='mb-4 p-4 bg-red-50 border border-red-200 rounded-lg'>
+                    <p className='text-red-800'>✗ {passwordError}</p>
+                  </div>
+                )}
+
+                <form onSubmit={handlePasswordChange} className='space-y-4'>
                   <div>
                     <label className='block text-sm font-medium text-slate-700 mb-2'>Current Password</label>
                     <input
                       type='password'
                       placeholder='Enter current password'
-                      className='w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                      value={passwordForm.currentPassword}
+                      onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })}
+                      disabled={passwordLoading}
+                      className='w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100'
                     />
                   </div>
                   <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
@@ -124,7 +203,10 @@ export default function Page() {
                       <input
                         type='password'
                         placeholder='Enter new password'
-                        className='w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                        value={passwordForm.newPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
+                        disabled={passwordLoading}
+                        className='w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100'
                       />
                     </div>
                     <div>
@@ -132,15 +214,19 @@ export default function Page() {
                       <input
                         type='password'
                         placeholder='Confirm new password'
-                        className='w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500'
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })}
+                        disabled={passwordLoading}
+                        className='w-full px-4 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-slate-100'
                       />
                     </div>
                   </div>
                   <button
                     type='submit'
-                    className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium'
+                    disabled={passwordLoading}
+                    className='px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium disabled:bg-slate-400 disabled:cursor-not-allowed'
                   >
-                    Update Password
+                    {passwordLoading ? 'Updating...' : 'Update Password'}
                   </button>
                 </form>
               </div>

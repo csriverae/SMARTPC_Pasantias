@@ -49,3 +49,13 @@ def authenticate_user(db: Session, email: str, password: str) -> User | None:
     if not verify_password(password, user.password):
         return None
     return user
+
+
+def update_user_password(db: Session, user: User, new_password: str) -> User:
+    """Update user password"""
+    hashed_password = get_password_hash(new_password)
+    user.password = hashed_password
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
