@@ -71,7 +71,9 @@ export const useAuthUser = (): UseAuthUserReturn => {
         throw new Error(`Error: ${response.status} ${response.statusText} ${errorText}`)
       }
 
-      const userData = await response.json()
+      const responseData = await response.json()
+      // Extraer el usuario del objeto data
+      const userData = responseData.data || responseData
       setUser(userData)
       // Guardar en localStorage para futuras cargas
       localStorage.setItem('user', JSON.stringify(userData))

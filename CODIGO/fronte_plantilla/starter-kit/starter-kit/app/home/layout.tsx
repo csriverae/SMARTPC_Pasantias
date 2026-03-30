@@ -1,5 +1,7 @@
 // MUI Imports
 import Button from '@mui/material/Button'
+import Box from '@mui/material/Box'
+import IconButton from '@mui/material/IconButton'
 
 // Layout Imports
 import LayoutWrapper from '@layouts/LayoutWrapper'
@@ -14,6 +16,7 @@ import Navbar from '@components/layout/vertical/Navbar'
 import VerticalFooter from '@components/layout/vertical/Footer'
 import HorizontalFooter from '@components/layout/horizontal/Footer'
 import ScrollToTop from '@core/components/scroll-to-top'
+import DashboardSidebar from '@components/DashboardSidebar'
 
 // Util Imports
 import { getMode, getSystemMode } from '@core/utils/serverHelpers'
@@ -31,14 +34,30 @@ const Layout = async props => {
       <LayoutWrapper
         systemMode={systemMode}
         verticalLayout={
-          <VerticalLayout navigation={<Navigation mode={mode} />} navbar={<Navbar />} footer={<VerticalFooter />}>
-            {children}
-          </VerticalLayout>
+          <Box sx={{ display: 'flex' }}>
+            {/* Sidebar - Desktop */}
+            <DashboardSidebar />
+            
+            {/* Main Content */}
+            <Box sx={{ flex: 1, ml: { xs: 0, md: '280px' }, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <VerticalLayout navigation={<Navigation mode={mode} />} navbar={<Navbar />} footer={<VerticalFooter />}>
+                {children}
+              </VerticalLayout>
+            </Box>
+          </Box>
         }
         horizontalLayout={
-          <HorizontalLayout header={<Header />} footer={<HorizontalFooter />}>
-            {children}
-          </HorizontalLayout>
+          <Box sx={{ display: 'flex' }}>
+            {/* Sidebar - Desktop */}
+            <DashboardSidebar />
+            
+            {/* Main Content */}
+            <Box sx={{ flex: 1, ml: { xs: 0, md: '280px' }, display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+              <HorizontalLayout header={<Header />} footer={<HorizontalFooter />}>
+                {children}
+              </HorizontalLayout>
+            </Box>
+          </Box>
         }
       />
       <ScrollToTop className='mui-fixed'>
