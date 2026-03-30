@@ -1,157 +1,302 @@
-from typing import List
+"""
+User authentication and management routes
+"""
+from typing import Optional, List
 from pydantic import BaseModel
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
-import traceback
+import logging
+
 from app.db.session import SessionLocal
-from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, PasswordChangeRequest
-from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email, delete_user, update_user_password
-from app.core.security import (
-    create_access_token,
-    create_refresh_token,
-    get_current_user,
-    require_roles,
-    verify_token,
+from app.schemas.user import (
+    UserCreate,
+    UserResponse,
+    UserListResponse,
+    UserLogin,
+    Token,
+    PasswordChangeRequest,
+    UserUpdate,
 )
-from app.api.utils.response import success_response, not_found_response
+from app.models.user import User
+from app.core.security import get_current_user
+from app.api.dependencies import require_admin, require_role, get_db
+from app.api.utils.response import (
+    success_response,
+    created_response,
+    not_found_response,
+    unauthorized_response,
+)
+from app.services.user_service import user_service
+from app.core.exceptions import (
+    InvalidCredentials,
+    ResourceNotFoundError,
+    ValidationError,
+)
 
+logger = logging.getLogger(__name__)
 
+# Request models
 class RefreshTokenRequest(BaseModel):
+    """Request body for token refresh"""
     refresh_token: str
 
 
 router = APIRouter()
 
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+# Authentication Endpoints
 
-
-@router.post("/register")
-def register(user: UserCreate, db: Session = Depends(get_db)):
-    try:
-        db_user = get_user_by_email(db, user.email)
-        if db_user:
-            raise HTTPException(status_code=400, detail="Email already registered")
-
-        created_user = create_user(db, user)
-        return success_response("User registered successfully", data=created_user, status_code=201)
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Registration error: {type(e).__name__}: {str(e)}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail="Registration failed. Please check your input and try again.")
-
-
-@router.post("/login")
-def login(user: UserLogin, db: Session = Depends(get_db)):
-    try:
-        db_user = authenticate_user(db, user.email, user.password)
-        if not db_user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Incorrect email or password",
-                headers={"WWW-Authenticate": "Bearer"},
-            )
-
-        token_data = {"sub": db_user.email, "role": db_user.role.value}
-        access_token = create_access_token(data=token_data)
-        refresh_token = create_refresh_token(data=token_data)
-
-        return success_response(
-            "Login successful",
-            data={
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-                "token_type": "bearer",
-            },
-        )
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Login error: {e}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Login error: {str(e)}")
-
-
-@router.post("/refresh")
-def refresh_token(refresh: RefreshTokenRequest, db: Session = Depends(get_db)):
-    payload = verify_token(refresh.refresh_token)
-    if payload is None or payload.get("sub") is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid refresh token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-
-    user = get_user_by_email(db, payload.get("sub"))
-    if user is None:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
-
-    token_data = {"sub": user.email, "role": user.role.value}
-    return success_response(
-        "Token refreshed",
+@router.post(
+    "/register",
+    response_model=Token,
+    status_code=status.HTTP_201_CREATED,
+    summary="Register a new user",
+    tags=["Authentication"]
+)
+def register(
+    user_data: UserCreate,
+    db: Session = Depends(get_db)
+):
+    """
+    Register a new user account
+    
+    - **email**: User email (must be unique)
+    - **password**: Password (min 6 characters)
+    - **first_name**: Optional first name
+    - **last_name**: Optional last name
+    - **full_name**: Optional full name (auto-generated if not provided)
+    """
+    user, access_token = user_service.register_user(db, user_data)
+    
+    return created_response(
+        message="User registered successfully",
         data={
-            "access_token": create_access_token(data=token_data),
-            "refresh_token": create_refresh_token(data=token_data),
+            "access_token": access_token,
             "token_type": "bearer",
-        },
+            "expires_in": 3600,
+        }
     )
 
 
-@router.get("/me")
-def get_current_user_endpoint(current_user=Depends(get_current_user)):
-    return success_response("Current user retrieved", data=current_user)
+@router.post(
+    "/login",
+    response_model=Token,
+    status_code=status.HTTP_200_OK,
+    summary="Login user",
+    tags=["Authentication"]
+)
+def login(
+    login_data: UserLogin,
+    db: Session = Depends(get_db)
+):
+    """
+    Authenticate user and return access token
+    
+    - **email**: User email
+    - **password**: User password
+    """
+    user, access_token, refresh_token = user_service.login_user(db, login_data)
+    
+    return success_response(
+        message="Login successful",
+        data={
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "token_type": "bearer",
+            "expires_in": 3600,
+        }
+    )
 
 
-@router.get("/users")
-def get_users_endpoint(current_user=Depends(require_roles("admin")), db: Session = Depends(get_db)):
-    try:
-        users = get_users(db)
-        return success_response("Users retrieved", data=users)
-    except Exception as e:
-        print(f"Get users error: {e}")
-        raise HTTPException(status_code=500, detail=f"Get users error: {str(e)}")
+@router.post(
+    "/refresh",
+    response_model=Token,
+    status_code=status.HTTP_200_OK,
+    summary="Refresh access token",
+    tags=["Authentication"]
+)
+def refresh_access_token(
+    refresh_request: RefreshTokenRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Generate a new access token using refresh token
+    
+    - **refresh_token**: Valid refresh token
+    """
+    access_token = user_service.refresh_access_token(
+        db,
+        refresh_request.refresh_token
+    )
+    
+    return success_response(
+        message="Token refreshed successfully",
+        data={
+            "access_token": access_token,
+            "token_type": "bearer",
+            "expires_in": 3600,
+        }
+    )
 
 
-@router.delete("/users/{user_id}")
-def delete_user_endpoint(user_id: int, current_user=Depends(require_roles("admin")), db: Session = Depends(get_db)):
-    try:
-        if not delete_user(db, user_id):
-            return not_found_response("User not found", detail=f"No user with id {user_id}")
-        return success_response("User deleted successfully", data={"id": user_id})
-    except Exception as e:
-        print(f"Delete user error: {e}")
-        raise HTTPException(status_code=500, detail=f"Delete user error: {str(e)}")
+# User Profile Endpoints
+
+@router.get(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get current user profile",
+    tags=["Profile"]
+)
+def get_current_user_profile(
+    current_user: User = Depends(get_current_user)
+):
+    """Get authenticated user profile"""
+    return success_response(
+        message="User profile retrieved",
+        data=current_user
+    )
 
 
-@router.post("/change-password")
-def change_password(password_change: PasswordChangeRequest, current_user=Depends(get_current_user), db: Session = Depends(get_db)):
-    try:
-        if password_change.new_password != password_change.confirm_password:
-            raise HTTPException(status_code=400, detail="New passwords do not match")
+@router.patch(
+    "/me",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Update user profile",
+    tags=["Profile"]
+)
+def update_user_profile(
+    update_data: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update authenticated user profile"""
+    updated_user = user_service.update_user_profile(
+        db,
+        current_user,
+        update_data
+    )
+    
+    return success_response(
+        message="User profile updated successfully",
+        data=updated_user
+    )
 
-        if not password_change.new_password or len(password_change.new_password) < 6:
-            raise HTTPException(status_code=400, detail="New password must be at least 6 characters")
 
-        from app.core.security import verify_password
-        user = get_user_by_email(db, current_user.email)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
+@router.post(
+    "/change-password",
+    status_code=status.HTTP_200_OK,
+    summary="Change user password",
+    tags=["Profile"]
+)
+def change_password(
+    password_data: PasswordChangeRequest,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Change authenticated user password"""
+    user_service.change_password(db, current_user, password_data)
+    
+    return success_response(
+        message="Password changed successfully",
+        data={"user_id": current_user.id}
+    )
 
-        if not verify_password(password_change.current_password, user.password):
-            raise HTTPException(status_code=401, detail="Current password is incorrect")
 
-        update_user_password(db, user, password_change.new_password)
-        return success_response("Password changed successfully", data={"id": user.id})
-    except HTTPException:
-        raise
-    except Exception as e:
-        print(f"Change password error: {e}")
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail="Change password error. Please try again with a valid password.")
+@router.delete(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="Delete user account",
+    tags=["Profile"]
+)
+def delete_account(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Delete authenticated user account"""
+    user_service.delete_user_account(db, current_user.id)
+    
+    return success_response(
+        message="User account deleted successfully",
+        data={"user_id": current_user.id}
+    )
+
+
+# Admin User Management Endpoints
+
+@router.get(
+    "/users",
+    response_model=List[UserListResponse],
+    status_code=status.HTTP_200_OK,
+    summary="List all users (Admin only)",
+    tags=["Admin"]
+)
+def list_users(
+    skip: int = 0,
+    limit: int = 100,
+    role: Optional[str] = None,
+    current_user: User = Depends(require_admin()),
+    db: Session = Depends(get_db)
+):
+    """
+    Get list of all users (Admin only)
+    
+    - **skip**: Number of records to skip (pagination)
+    - **limit**: Maximum number of records to return
+    - **role**: Optional filter by user role (admin or employee)
+    """
+    users = user_service.get_all_users(db, skip=skip, limit=limit)
+    
+    return success_response(
+        message=f"Retrieved {len(users)} users",
+        data=users
+    )
+
+
+@router.get(
+    "/users/{user_id}",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Get user by ID (Admin only)",
+    tags=["Admin"]
+)
+def get_user_by_id(
+    user_id: int,
+    current_user: User = Depends(require_admin()),
+    db: Session = Depends(get_db)
+):
+    """
+    Get specific user by ID (Admin only)
+    
+    - **user_id**: User ID to retrieve
+    """
+    user = user_service.get_user_by_id(db, user_id)
+    
+    return success_response(
+        message="User retrieved successfully",
+        data=user
+    )
+
+
+@router.delete(
+    "/users/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Delete user (Admin only)",
+    tags=["Admin"]
+)
+def delete_user_endpoint(
+    user_id: int,
+    current_user: User = Depends(require_admin()),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete specific user (Admin only)
+    
+    - **user_id**: User ID to delete
+    """
+    user_service.delete_user_account(db, user_id)
+    
+    return success_response(
+        message="User deleted successfully",
+        data={"user_id": user_id}
+    )

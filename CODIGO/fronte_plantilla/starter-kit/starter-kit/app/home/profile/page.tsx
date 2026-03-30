@@ -19,7 +19,7 @@ export default function ProfilePage() {
     <div className='p-6 max-w-4xl mx-auto'>
       <div className='mb-8'>
         <h1 className='text-4xl font-bold text-slate-900 mb-2'>My Profile</h1>
-        <p className='text-slate-500'>Manage your personal information and account settings</p>
+        <p className='text-base text-slate-600'>View and manage your personal information and account settings</p>
       </div>
 
       {/* Main Profile Card */}

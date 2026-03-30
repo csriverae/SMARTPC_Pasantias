@@ -87,7 +87,7 @@ export default function SettingsPage() {
     <div className='p-6 max-w-2xl mx-auto'>
       <div className='mb-8'>
         <h1 className='text-4xl font-bold text-slate-900 mb-2'>Settings</h1>
-        <p className='text-slate-500'>Manage your account settings and preferences</p>
+        <p className='text-base text-slate-600'>Manage your account settings, security preferences, and personal information</p>
       </div>
 
       {/* Change Password Card */}

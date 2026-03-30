@@ -29,40 +29,34 @@ const Layout = async props => {
 
   return (
     <Providers direction={direction}>
-      <LayoutWrapper
-        systemMode={systemMode}
-        verticalLayout={
-          <Box sx={{ display: 'flex' }}>
-            {/* Animated Sidebar */}
-            <DashboardSidebar />
-            
-            {/* Main Content with margin for collapsed sidebar */}
-            <Box sx={{ flex: 1, ml: { xs: 0, md: '60px' }, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin-left 0.3s ease-in-out' }}>
+      <Box sx={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+        {/* Sidebar */}
+        <Box sx={{ position: 'fixed', left: 0, top: 0, height: '100vh', zIndex: 100 }}>
+          <DashboardSidebar />
+        </Box>
+        
+        {/* Main Content */}
+        <Box sx={{ flex: 1, ml: { xs: 0, md: '60px' }, display: 'flex', flexDirection: 'column', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
+          <LayoutWrapper
+            systemMode={systemMode}
+            verticalLayout={
               <VerticalLayout navbar={<Navbar />} footer={<VerticalFooter />}>
                 {children}
               </VerticalLayout>
-            </Box>
-          </Box>
-        }
-        horizontalLayout={
-          <Box sx={{ display: 'flex' }}>
-            {/* Animated Sidebar */}
-            <DashboardSidebar />
-            
-            {/* Main Content with margin for collapsed sidebar */}
-            <Box sx={{ flex: 1, ml: { xs: 0, md: '60px' }, display: 'flex', flexDirection: 'column', minHeight: '100vh', transition: 'margin-left 0.3s ease-in-out' }}>
+            }
+            horizontalLayout={
               <HorizontalLayout header={<Header />} footer={<HorizontalFooter />}>
                 {children}
               </HorizontalLayout>
-            </Box>
-          </Box>
-        }
-      />
-      <ScrollToTop className='mui-fixed'>
-        <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
-          <i className='tabler-arrow-up' />
-        </Button>
-      </ScrollToTop>
+            }
+          />
+          <ScrollToTop className='mui-fixed'>
+            <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
+              <i className='tabler-arrow-up' />
+            </Button>
+          </ScrollToTop>
+        </Box>
+      </Box>
     </Providers>
   )
 }
