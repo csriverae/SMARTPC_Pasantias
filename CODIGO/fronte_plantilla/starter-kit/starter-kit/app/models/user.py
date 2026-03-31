@@ -34,9 +34,6 @@ class User(Base):
 
     # Relationships
     tenant = relationship("Tenant", backref="users")
-    companies = relationship("Company", back_populates="user")
-    employees = relationship("Employee", back_populates="user")
-    meal_logs = relationship("MealLog", back_populates="user")
 
     def __repr__(self):
         return f"<User(id={self.id}, email={self.email}, tenant_id={self.tenant_id})>"

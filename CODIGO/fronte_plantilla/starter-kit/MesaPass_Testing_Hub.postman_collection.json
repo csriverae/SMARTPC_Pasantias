@@ -1,0 +1,436 @@
+{
+  "info": {
+    "_postman_id": "multi-tenant-testing-2026",
+    "name": "MesaPass Multi-Tenant Testing Hub",
+    "description": "Complete testing suite for multi-tenant SaaS system",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:8000",
+      "type": "string"
+    },
+    {
+      "key": "tenant1_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "tenant2_id",
+      "value": "2",
+      "type": "string"
+    },
+    {
+      "key": "user1_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user2_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "restaurant1_id",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "restaurant2_id",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "🏢 TENANTS - Create & List",
+      "item": [
+        {
+          "name": "1️⃣ Create Tenant 1",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Quantum Restaurant Group\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tenants",
+              "host": ["{{base_url}}"],
+              "path": ["tenants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2️⃣ Create Tenant 2",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fast Burgers Inc\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tenants",
+              "host": ["{{base_url}}"],
+              "path": ["tenants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📋 List All Tenants",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tenants?skip=0&limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["tenants"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "👤 USERS - Register & Login",
+      "item": [
+        {
+          "name": "1️⃣ Register User 1 (Tenant 1)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('user1_token', jsonData.data.access_token);",
+                  "    console.log('✅ Token guardado para User 1');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@quantum.com\",\n  \"password\": \"AdminSecure123!\",\n  \"first_name\": \"Juan\",\n  \"last_name\": \"García\",\n  \"full_name\": \"Juan García\",\n  \"tenant_id\": 1,\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2️⃣ Register User 2 (Tenant 2)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 201) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('user2_token', jsonData.data.access_token);",
+                  "    console.log('✅ Token guardado para User 2');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@fastburgers.com\",\n  \"password\": \"Secure123!\",\n  \"first_name\": \"Maria\",\n  \"last_name\": \"López\",\n  \"full_name\": \"Maria López\",\n  \"tenant_id\": 2,\n  \"role\": \"admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🔓 Login User 1",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('user1_token', jsonData.data.access_token);",
+                  "    console.log('✅ User 1 logged in successfully');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@quantum.com\",\n  \"password\": \"AdminSecure123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🔓 Login User 2",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.environment.set('user2_token', jsonData.data.access_token);",
+                  "    console.log('✅ User 2 logged in successfully');",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"owner@fastburgers.com\",\n  \"password\": \"Secure123!\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🍽️ RESTAURANTS - Create, List, Get",
+      "item": [
+        {
+          "name": "1️⃣ Create Restaurant in Tenant 1 (User 1)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user1_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Pizza Paradise\",\n  \"description\": \"Pizzería de fuego lento\",\n  \"address\": \"Calle Principal 123, Ciudad\",\n  \"phone\": \"+34-912345678\",\n  \"email\": \"contact@pizzaparadise.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/restaurants",
+              "host": ["{{base_url}}"],
+              "path": ["restaurants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2️⃣ Create Restaurant in Tenant 2 (User 2)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user2_token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Burger King Quality\",\n  \"description\": \"Hamburguesas premium\",\n  \"address\": \"Avenida Central 456, Ciudad\",\n  \"phone\": \"+34-987654321\",\n  \"email\": \"contact@burgers.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/restaurants",
+              "host": ["{{base_url}}"],
+              "path": ["restaurants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📋 List Restaurants (User 1 - sees only Tenant 1)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/restaurants?skip=0&limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["restaurants"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "📋 List Restaurants (User 2 - sees only Tenant 2)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user2_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/restaurants?skip=0&limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["restaurants"],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "100"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🔓 Get Restaurant 1 (User 1 - ✅ Success)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user1_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/restaurants/1",
+              "host": ["{{base_url}}"],
+              "path": ["restaurants", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "🔐 Get Restaurant 1 (User 2 - ❌ 404 Not Found - SECURITY VALIDATION)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user2_token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/restaurants/1",
+              "host": ["{{base_url}}"],
+              "path": ["restaurants", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "⚡ QUICK TEST SEQUENCE",
+      "item": [
+        {
+          "name": "🚀 Run All Tests in Order",
+          "request": {
+            "description": "⚠️ IMPORTANT: Execute requests in this order:\n1. Create Tenant 1\n2. Create Tenant 2\n3. Register User 1 (Tenant 1)\n4. Register User 2 (Tenant 2)\n5. Create Restaurant 1 (User 1)\n6. Create Restaurant 2 (User 2)\n7. List Restaurants (User 1) - Should only see Restaurant 1\n8. List Restaurants (User 2) - Should only see Restaurant 2\n9. Get Restaurant 1 (User 1) - Should succeed ✅\n10. Get Restaurant 1 (User 2) - Should fail with 404 ❌ (This validates multi-tenant isolation!)",
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
