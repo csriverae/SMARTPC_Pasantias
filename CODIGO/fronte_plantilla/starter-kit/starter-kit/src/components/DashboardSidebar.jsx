@@ -56,6 +56,13 @@ const DashboardSidebar = () => {
 
     const adminMenu = [
       {
+        id: 'tenants',
+        label: 'Tenants',
+        icon: 'tabler-building-community',
+        path: '/home/tenants',
+        visible: user?.role === 'admin'
+      },
+      {
         id: 'users',
         label: 'Users Management',
         icon: 'tabler-users-group',
