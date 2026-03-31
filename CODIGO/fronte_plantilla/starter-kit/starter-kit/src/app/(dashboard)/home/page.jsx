@@ -1,4 +1,5 @@
-import { Fragment } from 'react'
+import { Fragment, useState, useEffect } from 'react'
+import { useAuthUser } from '@core/hooks/useAuthUser'
 
 const stats = [
   { label: 'Users', value: '1,280', icon: 'tabler-users', change: '+14%' },
@@ -8,7 +9,35 @@ const stats = [
 ]
 
 export default function Page() {
-  return (
+  const { user } = useAuthUser()
+  const [users, setUsers] = useState([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
+
+  useEffect(() => {
+    if (user?.role === 'admin') {
+      fetchUsers()
+    }
+  }, [user])
+
+  const fetchUsers = async () => {
+    setLoadingUsers(true)
+    try {
+      const token = localStorage.getItem('access_token')
+      const response = await fetch('http://localhost:8000/auth/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setUsers(data.data || [])
+      }
+    } catch (error) {
+      console.error('Error fetching users:', error)
+    } finally {
+      setLoadingUsers(false)
+    }
+  }
     <Fragment>
       <div className='py-6 px-6 sm:px-8'>
         <h1 className='text-3xl font-bold tracking-tight text-slate-900 mb-5'>Dashboard</h1>
@@ -52,6 +81,34 @@ export default function Page() {
               </li>
             </ul>
           </section>
+          {user?.role === 'admin' && (
+            <section className='bg-white border border-slate-200 rounded-xl p-4 shadow-sm'>
+              <header className='flex items-center justify-between mb-3'>
+                <h2 className='text-lg font-semibold text-slate-900'>Usuarios del Tenant</h2>
+                <span className='text-xs text-slate-500'>{users.length} usuarios</span>
+              </header>
+              {loadingUsers ? (
+                <p className='text-sm text-slate-500'>Cargando usuarios...</p>
+              ) : (
+                <ul className='space-y-2'>
+                  {users.slice(0, 5).map(u => (
+                    <li key={u.id} className='flex justify-between items-center p-2 rounded-md hover:bg-slate-100'>
+                      <div>
+                        <span className='text-sm font-medium'>{u.full_name}</span>
+                        <span className='text-xs text-slate-500 ml-2'>({u.role})</span>
+                      </div>
+                      <span className='text-xs text-slate-500'>{u.email}</span>
+                    </li>
+                  ))}
+                  {users.length > 5 && (
+                    <li className='text-xs text-slate-500 text-center pt-2'>
+                      Y {users.length - 5} más...
+                    </li>
+                  )}
+                </ul>
+              )}
+            </section>
+          )}
           <section className='bg-white border border-slate-200 rounded-xl p-4 shadow-sm'>
             <header className='flex items-center justify-between mb-3'>
               <h2 className='text-lg font-semibold text-slate-900'>Tareas pendientes</h2>

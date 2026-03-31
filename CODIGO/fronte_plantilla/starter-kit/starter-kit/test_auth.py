@@ -8,7 +8,8 @@ try:
         json={
             "email": "admin@example.com",
             "password": "password123",
-            "role": "admin"
+            "role": "admin",
+            "tenant_id": 1
         }
     )
     print(f"Status Code: {response.status_code}")

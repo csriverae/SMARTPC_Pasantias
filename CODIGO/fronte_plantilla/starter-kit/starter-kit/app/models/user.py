@@ -11,8 +11,6 @@ import enum
 class UserRole(str, enum.Enum):
     """User role enumeration"""
     admin = "admin"
-    restaurant_admin = "restaurant_admin"
-    company_admin = "company_admin"
     employee = "employee"
 
 

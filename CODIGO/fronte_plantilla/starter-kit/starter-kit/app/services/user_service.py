@@ -56,20 +56,31 @@ class UserService:
         existing_user = get_user_by_email(db, user_data.email)
         if existing_user:
             logger.warning(f"Registration attempt with existing email: {user_data.email}")
-            raise EmailAlreadyExists(
-                message=f"Email {user_data.email} is already registered",
-                details={"field": "email"}
-            )
+            raise EmailAlreadyExists(user_data.email)
+
+        # Validate unique admin per tenant
+        if user_data.role == UserRole.admin:
+            existing_admin = db.query(User).filter(
+                User.tenant_id == user_data.tenant_id,
+                User.role == UserRole.admin
+            ).first()
+            if existing_admin:
+                raise ValidationError("Only one admin allowed per tenant")
 
         # Hash password
         hashed_password = get_password_hash(user_data.password)
+
+        # Auto-generate full_name
+        full_name = f"{user_data.first_name or ''} {user_data.last_name or ''}".strip()
+        if not full_name:
+            full_name = user_data.email.split('@')[0]  # fallback
 
         # Create user
         user_dict = {
             "tenant_id": user_data.tenant_id,
             "email": user_data.email,
             "password": hashed_password,
-            "full_name": user_data.full_name,
+            "full_name": full_name,
             "first_name": user_data.first_name,
             "last_name": user_data.last_name,
             "role": user_data.role or UserRole.employee,
@@ -268,6 +279,7 @@ class UserService:
         db: Session,
         skip: int = 0,
         limit: int = 100,
+        tenant_id: Optional[int] = None,
         role: Optional[UserRole] = None
     ) -> List[User]:
         """
@@ -277,18 +289,76 @@ class UserService:
             db: Database session
             skip: Number of records to skip
             limit: Maximum number of records
+            tenant_id: Optional tenant filter
             role: Optional role filter
         
         Returns:
             List of users
         """
-        users = get_users(db, skip=skip, limit=limit)
+        query = db.query(User)
         
-        # Filter by role if specified
+        if tenant_id:
+            query = query.filter(User.tenant_id == tenant_id)
+        
         if role:
-            users = [u for u in users if u.role == role]
+            query = query.filter(User.role == role)
+        
+        users = query.offset(skip).limit(limit).all()
         
         return users
+
+    @staticmethod
+    def update_user(
+        db: Session,
+        user_id: int,
+        update_data: UserUpdate,
+        tenant_id: int
+    ) -> User:
+        """
+        Update user details (admin only, same tenant)
+        
+        Args:
+            db: Database session
+            user_id: User ID to update
+            update_data: Update data
+            tenant_id: Admin's tenant ID
+        
+        Returns:
+            Updated user
+        
+        Raises:
+            ResourceNotFoundError: If user not found
+            ValidationError: If validation fails
+        """
+        user = get_user(db, user_id)
+        if not user or user.tenant_id != tenant_id:
+            raise ResourceNotFoundError(
+                message="User not found",
+                details={"user_id": user_id}
+            )
+
+        update_dict = update_data.model_dump(exclude_unset=True)
+        
+        # Auto-generate full_name if first/last names changed
+        if 'first_name' in update_dict or 'last_name' in update_dict:
+            first = update_dict.get('first_name', user.first_name) or ''
+            last = update_dict.get('last_name', user.last_name) or ''
+            update_dict['full_name'] = f"{first} {last}".strip()
+        
+        # Validate unique admin if role changed to admin
+        if update_dict.get('role') == UserRole.admin and user.role != UserRole.admin:
+            existing_admin = db.query(User).filter(
+                User.tenant_id == tenant_id,
+                User.role == UserRole.admin,
+                User.id != user_id
+            ).first()
+            if existing_admin:
+                raise ValidationError("Only one admin allowed per tenant")
+
+        user = update_user(db, user_id, update_dict)
+        logger.info(f"User updated: {user.email}")
+
+        return user
 
     @staticmethod
     def get_user_by_id(db: Session, user_id: int) -> User:
@@ -314,13 +384,14 @@ class UserService:
         return user
 
     @staticmethod
-    def delete_user_account(db: Session, user_id: int) -> bool:
+    def delete_user_account(db: Session, user_id: int, tenant_id: int) -> bool:
         """
-        Delete user account
+        Delete user account (admin only, same tenant)
         
         Args:
             db: Database session
             user_id: User ID
+            tenant_id: Admin's tenant ID
         
         Returns:
             True if deletion successful
@@ -329,7 +400,7 @@ class UserService:
             ResourceNotFoundError: If user not found
         """
         user = get_user(db, user_id)
-        if not user:
+        if not user or user.tenant_id != tenant_id:
             raise ResourceNotFoundError(
                 message="User not found",
                 details={"user_id": user_id}

@@ -176,6 +176,7 @@ const LoginV2 = ({ mode }) => {
           first_name: firstName,
           last_name: lastName,
           role,
+          tenant_id: 1, // Default tenant for now
         }),
       })
 
@@ -381,6 +382,18 @@ const LoginV2 = ({ mode }) => {
                 <Box>
                   <CustomTextField
                     fullWidth
+                    label='Full Name'
+                    placeholder='Auto-generated'
+                    value={`${firstName} ${lastName}`.trim()}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <CustomTextField
+                    fullWidth
                     label='Role'
                     select
                     value={role}
@@ -391,8 +404,6 @@ const LoginV2 = ({ mode }) => {
                         children: (
                           <>
                             <option value='employee'>Employee</option>
-                            <option value='restaurant_admin'>Restaurant Admin</option>
-                            <option value='company_admin'>Company Admin</option>
                             <option value='admin'>Admin</option>
                           </>
                         )

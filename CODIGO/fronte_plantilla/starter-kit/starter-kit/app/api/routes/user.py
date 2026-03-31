@@ -48,7 +48,6 @@ router = APIRouter()
 
 @router.post(
     "/register",
-    response_model=Token,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new user",
     tags=["Authentication"]
@@ -82,7 +81,6 @@ def register(
 
 @router.post(
     "/login",
-    response_model=Token,
     status_code=status.HTTP_200_OK,
     summary="Login user",
     tags=["Authentication"]
@@ -113,7 +111,6 @@ def login(
 
 @router.post(
     "/refresh",
-    response_model=Token,
     status_code=status.HTTP_200_OK,
     summary="Refresh access token",
     tags=["Authentication"]
@@ -249,7 +246,7 @@ def list_users(
     - **limit**: Maximum number of records to return
     - **role**: Optional filter by user role (admin or employee)
     """
-    users = user_service.get_all_users(db, skip=skip, limit=limit)
+    users = user_service.get_all_users(db, skip=skip, limit=limit, tenant_id=current_user.tenant_id)
     
     return success_response(
         message=f"Retrieved {len(users)} users",
@@ -282,6 +279,36 @@ def get_user_by_id(
     )
 
 
+@router.patch(
+    "/users/{user_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Update user (Admin only)",
+    tags=["Admin"]
+)
+def update_user(
+    user_id: int,
+    update_data: UserUpdate,
+    current_user: User = Depends(require_admin()),
+    db: Session = Depends(get_db)
+):
+    """
+    Update user details (Admin only)
+    
+    - **user_id**: User ID to update
+    """
+    updated_user = user_service.update_user(
+        db,
+        user_id,
+        update_data,
+        current_user.tenant_id
+    )
+    
+    return success_response(
+        message="User updated successfully",
+        data=updated_user
+    )
+
+
 @router.delete(
     "/users/{user_id}",
     status_code=status.HTTP_200_OK,
@@ -298,7 +325,7 @@ def delete_user_endpoint(
     
     - **user_id**: User ID to delete
     """
-    user_service.delete_user_account(db, user_id)
+    user_service.delete_user_account(db, user_id, current_user.tenant_id)
     
     return success_response(
         message="User deleted successfully",
