@@ -1,0 +1,611 @@
+{
+  "info": {
+    "_postman_id": "mesapass-complete-2026-v2",
+    "name": "MesaPass Complete API - Hardcoded",
+    "description": "Colección lista para usar - Sin variables, URLs completas, todos los datos hardcodeados",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "version": "2.0.0"
+  },
+  "item": [
+    {
+      "name": "1️⃣ AUTH",
+      "description": "Autenticación y Registro",
+      "item": [
+        {
+          "name": "1.1 - Registrar Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPassword123\",\n  \"tenant_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/register",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "register"]
+            },
+            "description": "Registra un nuevo usuario. Requiere tenant_id"
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPassword123\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/login",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "login"]
+            },
+            "description": "Login - Obtiene token JWT con tenant_id"
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 - Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"COLOCA_TU_REFRESH_TOKEN_AQUI\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/refresh-token",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "refresh-token"]
+            },
+            "description": "Obtiene nuevo token usando refresh_token"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2️⃣ TENANTS (Admin)",
+      "description": "Gestión de Tenants - Solo Admin",
+      "item": [
+        {
+          "name": "2.1 - Listar Tenants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/?skip=0&limit=10",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", ""],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista todos los tenants (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 - Crear Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Mi Primer Tenant\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", ""]
+            },
+            "description": "Crea nuevo tenant (Admin only)"
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 - Obtener Tenant por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", "1"]
+            },
+            "description": "Obtiene detalles de un tenant específico (ID: 1)"
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 - Actualizar Tenant",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tenant Actualizado\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", "1"]
+            },
+            "description": "Actualiza nombre del tenant (ID: 1)"
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 - Eliminar Tenant",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", "1"]
+            },
+            "description": "Elimina un tenant (ID: 1)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3️⃣ RESTAURANTS",
+      "description": "Gestión de Restaurantes - Filtrado por Tenant",
+      "item": [
+        {
+          "name": "3.1 - Listar Restaurantes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/?skip=0&limit=10",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", ""],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Lista restaurantes del tenant actual (Auto-filtrado por JWT)"
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 - Crear Restaurante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"La Pizzería del Gordo\",\n  \"description\": \"Pizzas auténticas italianas hechas al horno de leña\",\n  \"address\": \"Calle Alcalá 123, 28009 Madrid\",\n  \"phone\": \"+34 912 345 678\",\n  \"email\": \"pizza@gordo.com\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", ""]
+            },
+            "description": "Crea nuevo restaurante en tenant actual"
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 - Obtener Restaurante por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", "1"]
+            },
+            "description": "Obtiene detalles de un restaurante (ID: 1)"
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 - Actualizar Restaurante",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"La Pizzería del Gordo - Premium\",\n  \"description\": \"Pizzas auténticas italianas + Pasta gourmet\",\n  \"address\": \"Calle Alcalá 456, 28009 Madrid\",\n  \"phone\": \"+34 912 999 999\",\n  \"email\": \"premium@gordo.com\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", "1"]
+            },
+            "description": "Actualiza un restaurante (ID: 1)"
+          },
+          "response": []
+        },
+        {
+          "name": "3.5 - Eliminar Restaurante",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer COLOCA_TU_TOKEN_AQUI"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", "1"]
+            },
+            "description": "Elimina un restaurante (ID: 1)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "🧪 QUICK TEST FLOW",
+      "description": "Flujo completo de prueba paso a paso",
+      "item": [
+        {
+          "name": "PASO 1 - Registrar Usuario",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPassword123\",\n  \"tenant_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/register",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "register"]
+            },
+            "description": "Registra admin@mesapass.com con tenant_id=1"
+          },
+          "response": []
+        },
+        {
+          "name": "PASO 2 - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPassword123\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/login",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "login"]
+            },
+            "description": "Login. Copia el access_token de la respuesta y úsalo en siguiente paso"
+          },
+          "response": []
+        },
+        {
+          "name": "PASO 3 - Crear Tenant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer PEGA_TU_ACCESS_TOKEN_AQUI"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Acme Corporation\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", ""]
+            },
+            "description": "Crea un nuevo tenant. Copia el ID de la respuesta"
+          },
+          "response": []
+        },
+        {
+          "name": "PASO 4 - Crear Restaurante",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer PEGA_TU_ACCESS_TOKEN_AQUI"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"El Seco del Gordo\",\n  \"description\": \"Cocina fusion contemporánea, lo mejor del Gordo\",\n  \"address\": \"Plaza Mayor 456, 28012 Madrid\",\n  \"phone\": \"+34 913 456 789\",\n  \"email\": \"seco@gordo.com\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", ""]
+            },
+            "description": "Crea un restaurante en el tenant actual"
+          },
+          "response": []
+        },
+        {
+          "name": "PASO 5 - Listar Restaurantes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer PEGA_TU_ACCESS_TOKEN_AQUI"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/?skip=0&limit=10",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", ""],
+              "query": [
+                {
+                  "key": "skip",
+                  "value": "0"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Verifica que el restaurante fue creado correctamente"
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

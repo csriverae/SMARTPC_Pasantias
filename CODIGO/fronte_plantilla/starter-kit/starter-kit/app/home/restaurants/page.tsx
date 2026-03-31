@@ -17,8 +17,6 @@ import {
 } from '@mui/material'
 import { useRestaurants, useTenantFromToken } from '@core/hooks/useApi'
 import CreateRestaurantModal, { RestaurantFormData } from '@components/modals/CreateRestaurantModal'
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
 
 interface Restaurant {
   id: number
@@ -156,21 +154,19 @@ export default function RestaurantsPage() {
                         />
                       )}
                     </Box>
-                    <Box>
-                      <Tooltip title="Editar">
-                        <IconButton size="small" disabled>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteRestaurant(restaurant.id, restaurant.name)}
-                          disabled={loading}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button variant="text" size="small" disabled>
+                        ✏️ Editar
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteRestaurant(restaurant.id, restaurant.name)}
+                        disabled={loading}
+                      >
+                        🗑️ Eliminar
+                      </Button>
                     </Box>
                   </Box>
 

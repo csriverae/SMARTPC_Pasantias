@@ -15,8 +15,6 @@ import {
 } from '@mui/material'
 import { useTenants } from '@core/hooks/useApi'
 import CreateTenantModal from '@components/modals/CreateTenantModal'
-import DeleteIcon from '@mui/icons-material/Delete'
-import EditIcon from '@mui/icons-material/Edit'
 
 interface Tenant {
   id: number
@@ -118,21 +116,19 @@ export default function TenantsPage() {
                     <Typography variant="h6" component="div" sx={{ flex: 1 }}>
                       {tenant.name}
                     </Typography>
-                    <Box>
-                      <Tooltip title="Editar">
-                        <IconButton size="small" disabled>
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Eliminar">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
-                          disabled={loading}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button variant="text" size="small" disabled>
+                        ✏️ Editar
+                      </Button>
+                      <Button
+                        variant="text"
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteTenant(tenant.id, tenant.name)}
+                        disabled={loading}
+                      >
+                        🗑️ Eliminar
+                      </Button>
                     </Box>
                   </Box>
                   <Typography variant="body2" color="textSecondary" sx={{ mb: 1 }}>
