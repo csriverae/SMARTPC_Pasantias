@@ -7,7 +7,9 @@ from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 import logging
 
-from app.api.routes.user import router
+from app.api.routes.user import router as auth_router
+from app.api.routes.tenant import router as tenant_router
+from app.api.routes.restaurant import router as restaurant_router
 from app.db.session import engine
 from app.db.base import Base
 from app.api.utils.response import (
@@ -33,7 +35,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Import models so metadata is populated before create_all
-from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog  # noqa: F401
+from app.models import Tenant, User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog  # noqa: F401
 
 
 @asynccontextmanager
@@ -66,7 +68,9 @@ app.add_middleware(
 )
 
 # Include routers
-app.include_router(router, prefix="/auth", tags=["Authentication"])
+app.include_router(auth_router, prefix="/auth", tags=["Authentication"])
+app.include_router(tenant_router, prefix="/tenants", tags=["Tenants"])
+app.include_router(restaurant_router, prefix="/restaurants", tags=["Restaurants"])
 
 
 # Global Exception Handlers

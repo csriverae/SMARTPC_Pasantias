@@ -65,3 +65,10 @@ class InvalidCredentials(SaaSException):
             status.HTTP_401_UNAUTHORIZED,
             "INVALID_CREDENTIALS"
         )
+
+
+class ConflictError(SaaSException):
+    """Raised when there's a conflict (e.g., duplicate resource)"""
+    def __init__(self, message: str = "Resource conflict", details: dict = None):
+        super().__init__(message, status.HTTP_409_CONFLICT, "CONFLICT")
+        self.details = details or {}

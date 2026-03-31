@@ -62,6 +62,7 @@ def register(
     
     - **email**: User email (must be unique)
     - **password**: Password (min 6 characters)
+    - **tenant_id**: Tenant ID (required)
     - **first_name**: Optional first name
     - **last_name**: Optional last name
     - **full_name**: Optional full name (auto-generated if not provided)
@@ -74,6 +75,7 @@ def register(
             "access_token": access_token,
             "token_type": "bearer",
             "expires_in": 3600,
+            "tenant_id": user.tenant_id,
         }
     )
 
@@ -104,6 +106,7 @@ def login(
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "expires_in": 3600,
+            "tenant_id": user.tenant_id,
         }
     )
 
@@ -124,7 +127,7 @@ def refresh_access_token(
     
     - **refresh_token**: Valid refresh token
     """
-    access_token = user_service.refresh_access_token(
+    access_token, tenant_id = user_service.refresh_access_token(
         db,
         refresh_request.refresh_token
     )
@@ -135,6 +138,7 @@ def refresh_access_token(
             "access_token": access_token,
             "token_type": "bearer",
             "expires_in": 3600,
+            "tenant_id": tenant_id,
         }
     )
 

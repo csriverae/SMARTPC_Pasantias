@@ -11,6 +11,7 @@ class UserCreate(BaseModel):
     """Schema for creating a new user"""
     email: str
     password: str
+    tenant_id: int  # Required: must belong to a tenant
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     full_name: Optional[str] = None
@@ -30,6 +31,14 @@ class UserCreate(BaseModel):
         """Validate password requirements"""
         if not v or len(v) < 6:
             raise ValueError('Password must be at least 6 characters')
+        return v
+
+    @field_validator('tenant_id')
+    @classmethod
+    def validate_tenant_id(cls, v):
+        """Validate tenant ID"""
+        if not v or v < 1:
+            raise ValueError('Invalid tenant ID')
         return v
 
     @field_validator('full_name', mode='after')
@@ -108,6 +117,7 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: int
+    tenant_id: int
     email: str
     full_name: Optional[str] = None
     first_name: Optional[str] = None
@@ -136,11 +146,13 @@ class Token(BaseModel):
     token_type: str = "bearer"
     refresh_token: Optional[str] = None
     expires_in: Optional[int] = None
+    tenant_id: Optional[int] = None
 
 
 class TokenData(BaseModel):
     """Schema for token claims"""
     email: Optional[str] = None
+    tenant_id: Optional[int] = None
     exp: Optional[int] = None
     iat: Optional[int] = None
     sub: Optional[str] = None

@@ -1,3 +1,4 @@
+from .tenant import Tenant
 from .user import User, UserRole
 from .restaurant import Restaurant
 from .company import Company

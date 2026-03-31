@@ -66,6 +66,7 @@ class UserService:
 
         # Create user
         user_dict = {
+            "tenant_id": user_data.tenant_id,
             "email": user_data.email,
             "password": hashed_password,
             "full_name": user_data.full_name,
@@ -75,10 +76,13 @@ class UserService:
         }
 
         user = create_user(db, user_dict)
-        logger.info(f"User registered: {user.email}")
+        logger.info(f"User registered: {user.email} (tenant: {user.tenant_id})")
 
-        # Generate tokens
-        access_token = create_access_token(user.email)
+        # Generate tokens with tenant_id
+        access_token = create_access_token({
+            "sub": user.email,
+            "tenant_id": user.tenant_id
+        })
 
         return user, access_token
 
@@ -112,16 +116,22 @@ class UserService:
                 message="Invalid email or password"
             )
 
-        # Generate tokens
-        access_token = create_access_token(user.email)
-        refresh_token = create_refresh_token(user.email)
+        # Generate tokens with tenant_id
+        access_token = create_access_token({
+            "sub": user.email,
+            "tenant_id": user.tenant_id
+        })
+        refresh_token = create_refresh_token({
+            "sub": user.email,
+            "tenant_id": user.tenant_id
+        })
 
-        logger.info(f"User logged in: {user.email}")
+        logger.info(f"User logged in: {user.email} (tenant: {user.tenant_id})")
 
         return user, access_token, refresh_token
 
     @staticmethod
-    def refresh_access_token(db: Session, refresh_token: str) -> str:
+    def refresh_access_token(db: Session, refresh_token: str) -> tuple[str, int]:
         """
         Generate new access token from refresh token
         
@@ -130,7 +140,7 @@ class UserService:
             refresh_token: Refresh token
         
         Returns:
-            New access token
+            Tuple of (new access token, tenant_id)
         
         Raises:
             InvalidCredentials: If refresh token is invalid
@@ -147,11 +157,14 @@ class UserService:
             if not user:
                 raise InvalidCredentials("User not found")
             
-            # Generate new access token
-            access_token = create_access_token(email)
-            logger.info(f"Access token refreshed for user: {email}")
+            # Generate new access token with tenant_id
+            access_token = create_access_token({
+                "sub": user.email,
+                "tenant_id": user.tenant_id
+            })
+            logger.info(f"Access token refreshed for user: {email} (tenant: {user.tenant_id})")
             
-            return access_token
+            return access_token, user.tenant_id
         except Exception as e:
             logger.warning(f"Failed to refresh token: {str(e)}")
             raise InvalidCredentials("Invalid or expired refresh token")

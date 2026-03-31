@@ -1,0 +1,340 @@
+{
+	"info": {
+		"name": "MesaPass Multi-Tenant API",
+		"description": "Complete multi-tenant SaaS API collection with Tenant, User, and Restaurant endpoints",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Tenants",
+			"item": [
+				{
+					"name": "Create Tenant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"Acme Corporation\",\n  \"slug\": \"acme-corp\",\n  \"description\": \"Leading technology solutions provider\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/tenants/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["tenants", ""]
+						}
+					}
+				},
+				{
+					"name": "List Tenants",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/tenants/?skip=0&limit=100",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["tenants", ""],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Tenant by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{admin_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/tenants/{{tenant_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["tenants", "{{tenant_id}}"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User with Tenant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@acme.com\",\n  \"password\": \"password123\",\n  \"tenant_id\": {{tenant_id}},\n  \"first_name\": \"John\",\n  \"last_name\": \"Doe\",\n  \"role\": \"admin\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/auth/register",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"email\": \"john@acme.com\",\n  \"password\": \"password123\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/auth/login",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refresh_token\": \"{{refresh_token}}\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/auth/refresh",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["auth", "refresh"]
+						}
+					}
+				},
+				{
+					"name": "Get Current User",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/auth/me",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["auth", "me"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "Restaurants",
+			"item": [
+				{
+					"name": "Create Restaurant",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"name\": \"La Bella Italia\",\n  \"description\": \"Authentic Italian cuisine\",\n  \"address\": \"123 Main St, Downtown\",\n  \"phone\": \"+1-555-0100\",\n  \"email\": \"contact@labella.com\",\n  \"latitude\": 40.7128,\n  \"longitude\": -74.0060\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/restaurants/",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["restaurants", ""]
+						}
+					}
+				},
+				{
+					"name": "List Restaurants (Tenant)",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/restaurants/?skip=0&limit=100",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["restaurants", ""],
+							"query": [
+								{
+									"key": "skip",
+									"value": "0"
+								},
+								{
+									"key": "limit",
+									"value": "100"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Restaurant by ID",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/restaurants/{{restaurant_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["restaurants", "{{restaurant_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Update Restaurant",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"description\": \"Updated description\",\n  \"phone\": \"+1-555-0101\"\n}"
+						},
+						"url": {
+							"raw": "http://localhost:8000/restaurants/{{restaurant_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["restaurants", "{{restaurant_id}}"]
+						}
+					}
+				},
+				{
+					"name": "Delete Restaurant",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{access_token}}"
+							}
+						],
+						"url": {
+							"raw": "http://localhost:8000/restaurants/{{restaurant_id}}",
+							"protocol": "http",
+							"host": ["localhost"],
+							"port": "8000",
+							"path": ["restaurants", "{{restaurant_id}}"]
+						}
+					}
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "admin_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "access_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "refresh_token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "tenant_id",
+			"value": "1",
+			"type": "string"
+		},
+		{
+			"key": "restaurant_id",
+			"value": "1",
+			"type": "string"
+		}
+	]
+}
