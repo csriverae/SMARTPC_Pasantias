@@ -1,0 +1,577 @@
+{
+  "info": {
+    "_postman_id": "mesapass-complete-clean-2026",
+    "name": "MesaPass Complete API - Clean",
+    "description": "Colección consolidada y sin duplicados. URLs completas y bodies JSON listos.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. AUTH",
+      "item": [
+        {
+          "name": "POST /auth/register",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPass123!\",\n  \"first_name\": \"Admin\",\n  \"last_name\": \"User\",\n  \"role\": \"admin\",\n  \"tenant_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/register",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /auth/login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPass123!\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/login",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /auth/refresh",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_REFRESH_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refresh_token\": \"REEMPLAZA_POR_REFRESH_TOKEN\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/refresh-token",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "refresh-token"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. TENANTS (Admin)",
+      "item": [
+        {
+          "name": "POST /tenants",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tenant MultiTest\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /tenants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants?skip=0&limit=20",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants"],
+              "query": [{"key": "skip", "value": "0"}, {"key": "limit", "value": "20"}]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /tenants/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /tenants/{id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Tenant Actualizado\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /tenants/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/tenants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["tenants", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. USERS (Admin only)",
+      "item": [
+        {
+          "name": "GET /auth/users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/users?skip=0&limit=20",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "users"],
+              "query": [{"key": "skip", "value": "0"}, {"key": "limit", "value": "20"}]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /auth/users/{uuid}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/users/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "users", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /auth/users/{uuid}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Empleado\",\n  \"last_name\": \"Actualizado\",\n  \"role\": \"employee\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/users/2",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "users", "2"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /auth/users/{uuid}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/users/2",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "users", "2"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. RESTAURANTS",
+      "item": [
+        {
+          "name": "POST /restaurants",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Restaurant Test\",\n  \"address\": \"Calle Falsa 123\",\n  \"tenant_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /restaurants",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants?skip=0&limit=20",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants"],
+              "query": [{"key": "skip", "value": "0"}, {"key": "limit", "value": "20"}]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "GET /restaurants/{id}",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /restaurants/{id}",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Restaurant Actualizado\",\n  \"address\": \"Avenida Renovada 456\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /restaurants/{id}",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants/1",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants", "1"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. PROFILE",
+      "item": [
+        {
+          "name": "GET /auth/me",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/me",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "PATCH /auth/me",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"AdminEdit\",\n  \"last_name\": \"Perfil\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/me",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "POST /auth/change-password",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"old_password\": \"AdminPass123!\",\n  \"new_password\": \"AdminPass456!\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/change-password",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "change-password"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "DELETE /auth/me",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/me",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "6. TEST FLOW",
+      "item": [
+        {
+          "name": "6.1 - Register Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPass123!\",\n  \"first_name\": \"Admin\",\n  \"last_name\": \"Test\",\n  \"role\": \"admin\",\n  \"tenant_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/register",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 - Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPass123!\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/login",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 - Get Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/me",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "me"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.4 - Create Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"employee@mesapass.com\",\n  \"password\": \"EmployeePass123!\",\n  \"first_name\": \"Empleado\",\n  \"last_name\": \"SaaS\",\n  \"role\": \"employee\",\n  \"tenant_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/register",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "register"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.5 - Create Restaurant",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Content-Type", "value": "application/json"},
+              {"key": "Accept", "value": "application/json"},
+              {"key": "Authorization", "value": "Bearer REEMPLAZA_POR_ACCESS_TOKEN"}
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Restaurante Test E2E\",\n  \"address\": \"Prueba 123\",\n  \"tenant_id\": 1\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/restaurants",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["restaurants"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
