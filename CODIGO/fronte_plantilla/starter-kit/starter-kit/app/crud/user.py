@@ -1,53 +1,69 @@
 from sqlalchemy.orm import Session
-from app.models.user import User, UserRole
+from uuid import UUID
+from app.models.user import User, UserTenant, UserRole
 from app.schemas.user import UserCreate
 from app.core.security import get_password_hash, verify_password
 
 
-def create_user(db: Session, user: UserCreate | dict) -> User:
-    # Hash password using bcrypt directly (imported in security.py)
-    if isinstance(user, dict):
-        # Handle dict input (from service layer)
-        if 'password' in user and not user['password'].startswith('$2b$'):
-            user['password'] = get_password_hash(user['password'])
-        db_user = User(**user)
-    else:
-        # Handle UserCreate schema input
-        hashed_password = get_password_hash(user.password)
-        role = user.role if user.role else UserRole.employee
-        full_name = user.full_name
-        if not full_name:
-            first = getattr(user, 'first_name', None) or ''
-            last = getattr(user, 'last_name', None) or ''
-            full_name = f"{first} {last}".strip() or None
-
-        db_user = User(
-            email=user.email,
-            password=hashed_password,
-            full_name=full_name,
-            role=role
-        )
+def create_user_with_tenant(db: Session, user_data: UserCreate) -> tuple[User, UserTenant]:
+    """Create a user and assign to tenant with role"""
+    # Create user
+    hashed_password = get_password_hash(user_data.password)
+    db_user = User(
+        email=user_data.email,
+        password=hashed_password,
+        is_active=True
+    )
     
     db.add(db_user)
+    db.flush()  # Get the user ID before committing
+    
+    # Create user-tenant relationship
+    user_tenant = UserTenant(
+        user_id=db_user.id,
+        tenant_id=user_data.tenant_id,
+        role=user_data.role or UserRole.employee
+    )
+    
+    db.add(user_tenant)
     db.commit()
     db.refresh(db_user)
-    return db_user
+    db.refresh(user_tenant)
+    
+    return db_user, user_tenant
 
 
-def get_user(db: Session, user_id: int) -> User | None:
+def get_user(db: Session, user_id: UUID) -> User | None:
     """Get user by ID"""
     return db.query(User).filter(User.id == user_id).first()
 
 
 def get_users(db: Session) -> list[User]:
+    """Get all users"""
     return db.query(User).all()
 
 
 def get_user_by_email(db: Session, email: str) -> User | None:
+    """Get user by email"""
     return db.query(User).filter(User.email == email).first()
 
 
-def update_user(db: Session, user_id: int, update_data: dict) -> User | None:
+def get_user_tenants(db: Session, user_id: UUID, tenant_id: UUID = None) -> list[UserTenant]:
+    """Get user's tenant memberships"""
+    query = db.query(UserTenant).filter(UserTenant.user_id == user_id)
+    if tenant_id:
+        query = query.filter(UserTenant.tenant_id == tenant_id)
+    return query.all()
+
+
+def get_tenant_users(db: Session, tenant_id: UUID) -> list[User]:
+    """Get all users in a specific tenant"""
+    return db.query(User).join(
+        UserTenant, User.id == UserTenant.user_id
+    ).filter(UserTenant.tenant_id == tenant_id).all()
+
+
+def update_user(db: Session, user_id: UUID, update_data: dict) -> User | None:
     """Update user with provided data"""
     user = db.query(User).filter(User.id == user_id).first()
     if user:
@@ -61,7 +77,23 @@ def update_user(db: Session, user_id: int, update_data: dict) -> User | None:
     return None
 
 
-def delete_user(db: Session, user_id: int) -> bool:
+def update_user_role(db: Session, user_id: UUID, tenant_id: UUID, new_role: UserRole) -> UserTenant | None:
+    """Update user's role in a specific tenant"""
+    user_tenant = db.query(UserTenant).filter(
+        UserTenant.user_id == user_id,
+        UserTenant.tenant_id == tenant_id
+    ).first()
+    if user_tenant:
+        user_tenant.role = new_role
+        db.add(user_tenant)
+        db.commit()
+        db.refresh(user_tenant)
+        return user_tenant
+    return None
+
+
+def delete_user(db: Session, user_id: UUID) -> bool:
+    """Delete user (cascades to user_tenants)"""
     user = db.query(User).filter(User.id == user_id).first()
     if user:
         db.delete(user)
@@ -71,6 +103,7 @@ def delete_user(db: Session, user_id: int) -> bool:
 
 
 def authenticate_user(db: Session, email: str, password: str) -> User | None:
+    """Authenticate user by email and password"""
     user = get_user_by_email(db, email)
     if not user:
         return None

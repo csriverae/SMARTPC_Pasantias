@@ -27,7 +27,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"AdminPassword123\",\n  \"tenant_id\": 1\n}"
+              "raw": "{\n  \"email\": \"admin@kfc.com\",\n  \"password\": \"123456\",\n  \"first_name\": \"Carlos\",\n  \"last_name\": \"Rivera\",\n  \"role\": \"admin\",\n  \"tenant_id\": 1\n}"
             },
             "url": {
               "raw": "http://127.0.0.1:8000/auth/register",
@@ -36,7 +36,7 @@
               "port": "8000",
               "path": ["auth", "register"]
             },
-            "description": "Registra un nuevo usuario. Requiere tenant_id"
+            "description": "Registra un nuevo usuario con first_name, last_name, role. Requiere tenant_id"
           },
           "response": []
         },

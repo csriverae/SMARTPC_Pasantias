@@ -2,8 +2,9 @@
 Pydantic schemas for user validation and serialization
 """
 from typing import Optional
-from pydantic import BaseModel, ConfigDict, field_validator, EmailStr
+from pydantic import BaseModel, ConfigDict, field_validator
 from datetime import datetime
+from uuid import UUID
 from app.models.user import UserRole
 
 
@@ -11,10 +12,7 @@ class UserCreate(BaseModel):
     """Schema for creating a new user"""
     email: str
     password: str
-    tenant_id: int  # Required: must belong to a tenant
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    full_name: Optional[str] = None
+    tenant_id: UUID  # Required: must belong to a tenant
     role: Optional[UserRole] = UserRole.employee  # Default to employee
 
     @field_validator('email')
@@ -33,21 +31,7 @@ class UserCreate(BaseModel):
             raise ValueError('Password must be at least 6 characters')
         return v
 
-    @field_validator('tenant_id')
-    @classmethod
-    def validate_tenant_id(cls, v):
-        """Validate tenant ID"""
-        if not v or v < 1:
-            raise ValueError('Invalid tenant ID')
-        return v
-
-    @field_validator('full_name', mode='after')
-    @classmethod
-    def build_full_name(cls, v, info):
-        """Build full name from first and last names if not provided"""
-        if v:
-            return v.strip()
-        
+    model_config = ConfigDict(from_attributes=True)
         values = info.data
         first = values.get('first_name') or ''
         last = values.get('last_name') or ''
@@ -67,6 +51,8 @@ class UserLogin(BaseModel):
         if not v or '@' not in v:
             raise ValueError('Invalid email format')
         return v.lower().strip()
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PasswordChangeRequest(BaseModel):
@@ -91,52 +77,33 @@ class PasswordChangeRequest(BaseModel):
             raise ValueError('Passwords do not match')
         return v
 
+    model_config = ConfigDict(from_attributes=True)
+
 
 class UserUpdate(BaseModel):
     """Schema for updating user"""
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    full_name: Optional[str] = None
     role: Optional[UserRole] = None
     is_active: Optional[bool] = None
 
-    @field_validator('full_name', mode='after')
-    @classmethod
-    def build_full_name(cls, v, info):
-        """Build full name from first and last names if not provided"""
-        if v:
-            return v.strip()
-        
-        values = info.data
-        first = values.get('first_name') or ''
-        last = values.get('last_name') or ''
-        combined = f"{first} {last}".strip()
-        return combined if combined else None
+    model_config = ConfigDict(from_attributes=True)
 
 
 class UserResponse(BaseModel):
     """Schema for user response"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
-    tenant_id: int
+    id: UUID
     email: str
-    full_name: Optional[str] = None
-    first_name: Optional[str] = None
-    last_name: Optional[str] = None
-    role: UserRole
-    created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
     is_active: bool = True
+    created_at: Optional[datetime] = None
 
 
 class UserListResponse(BaseModel):
     """Schema for user list response"""
     model_config = ConfigDict(from_attributes=True)
 
-    id: int
+    id: UUID
     email: str
-    full_name: Optional[str] = None
     role: UserRole
     is_active: bool = True
     created_at: Optional[datetime] = None
@@ -148,13 +115,13 @@ class Token(BaseModel):
     token_type: str = "bearer"
     refresh_token: Optional[str] = None
     expires_in: Optional[int] = None
-    tenant_id: Optional[int] = None
+    tenant_id: Optional[UUID] = None
 
 
 class TokenData(BaseModel):
     """Schema for token claims"""
     email: Optional[str] = None
-    tenant_id: Optional[int] = None
+    tenant_id: Optional[UUID] = None
     exp: Optional[int] = None
     iat: Optional[int] = None
     sub: Optional[str] = None
@@ -166,9 +133,3 @@ class ErrorDetail(BaseModel):
     status: int
     error: bool = True
     data: Optional[dict] = None
-
-
-class PasswordChangeRequest(BaseModel):
-    current_password: str
-    new_password: str
-    confirm_password: str

@@ -1,12 +1,10 @@
-"""
-User service layer - Business logic for user operations
-"""
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 import logging
+from uuid import UUID
 
-from app.models.user import User, UserRole
+from app.models.user import User, UserTenant, UserRole
 from app.schemas.user import UserCreate, UserLogin, PasswordChangeRequest, UserUpdate
 from app.core.security import (
     get_password_hash,
@@ -22,12 +20,17 @@ from app.core.exceptions import (
     ValidationError,
 )
 from app.crud.user import (
-    create_user,
+    create_user_with_tenant,
     get_user,
     get_user_by_email,
     get_users,
+    get_tenant_users,
+    get_user_tenants,
     update_user,
+    update_user_role,
     delete_user,
+    authenticate_user,
+    update_user_password,
 )
 
 logger = logging.getLogger(__name__)
@@ -60,39 +63,22 @@ class UserService:
 
         # Validate unique admin per tenant
         if user_data.role == UserRole.admin:
-            existing_admin = db.query(User).filter(
-                User.tenant_id == user_data.tenant_id,
-                User.role == UserRole.admin
-            ).first()
-            if existing_admin:
+            existing_admins = db.query(UserTenant).filter(
+                UserTenant.tenant_id == user_data.tenant_id,
+                UserTenant.role == UserRole.admin
+            ).count()
+            if existing_admins > 0:
                 raise ValidationError("Only one admin allowed per tenant")
 
-        # Hash password
-        hashed_password = get_password_hash(user_data.password)
-
-        # Auto-generate full_name
-        full_name = f"{user_data.first_name or ''} {user_data.last_name or ''}".strip()
-        if not full_name:
-            full_name = user_data.email.split('@')[0]  # fallback
-
-        # Create user
-        user_dict = {
-            "tenant_id": user_data.tenant_id,
-            "email": user_data.email,
-            "password": hashed_password,
-            "full_name": full_name,
-            "first_name": user_data.first_name,
-            "last_name": user_data.last_name,
-            "role": user_data.role or UserRole.employee,
-        }
-
-        user = create_user(db, user_dict)
-        logger.info(f"User registered: {user.email} (tenant: {user.tenant_id})")
+        # Create user with tenant relationship
+        user, user_tenant = create_user_with_tenant(db, user_data)
+        logger.info(f"User registered: {user.email} (tenant: {user_data.tenant_id}, role: {user_data.role})")
 
         # Generate tokens with tenant_id
         access_token = create_access_token({
             "sub": user.email,
-            "tenant_id": user.tenant_id
+            "tenant_id": str(user_data.tenant_id),
+            "role": user_data.role.value
         })
 
         return user, access_token
@@ -116,28 +102,33 @@ class UserService:
         user = get_user_by_email(db, login_data.email)
         if not user:
             logger.warning(f"Login attempt with non-existent email: {login_data.email}")
-            raise InvalidCredentials(
-                message="Invalid email or password"
-            )
+            raise InvalidCredentials()
 
         # Verify password
         if not verify_password(login_data.password, user.password):
             logger.warning(f"Failed login attempt for user: {login_data.email}")
-            raise InvalidCredentials(
-                message="Invalid email or password"
-            )
+            raise InvalidCredentials()
+        # Get first tenant for user
+        user_tenants = get_user_tenants(db, user.id)
+        if not user_tenants:
+            raise InvalidCredentials()
+        
+        tenant_id = user_tenants[0].tenant_id
+        role = user_tenants[0].role
 
         # Generate tokens with tenant_id
         access_token = create_access_token({
             "sub": user.email,
-            "tenant_id": user.tenant_id
+            "tenant_id": str(tenant_id),
+            "role": role.value
         })
         refresh_token = create_refresh_token({
             "sub": user.email,
-            "tenant_id": user.tenant_id
+            "tenant_id": str(tenant_id),
+            "role": role.value
         })
 
-        logger.info(f"User logged in: {user.email} (tenant: {user.tenant_id})")
+        logger.info(f"User logged in: {user.email} (tenant: {tenant_id}, role: {role})")
 
         return user, access_token, refresh_token
 
@@ -168,14 +159,23 @@ class UserService:
             if not user:
                 raise InvalidCredentials("User not found")
             
+            # Get user's first tenant for token claims
+            user_tenants = get_user_tenants(db, user.id)
+            if not user_tenants:
+                raise InvalidCredentials("User has no tenant assignments")
+            
+            tenant_id = user_tenants[0].tenant_id
+            role = user_tenants[0].role
+            
             # Generate new access token with tenant_id
             access_token = create_access_token({
                 "sub": user.email,
-                "tenant_id": user.tenant_id
+                "tenant_id": str(tenant_id),
+                "role": role.value
             })
-            logger.info(f"Access token refreshed for user: {email} (tenant: {user.tenant_id})")
+            logger.info(f"Access token refreshed for user: {email} (tenant: {tenant_id})")
             
-            return access_token, user.tenant_id
+            return access_token, tenant_id
         except Exception as e:
             logger.warning(f"Failed to refresh token: {str(e)}")
             raise InvalidCredentials("Invalid or expired refresh token")
@@ -227,16 +227,11 @@ class UserService:
         # Verify current password
         if not verify_password(password_data.current_password, user.password):
             logger.warning(f"Failed password change attempt for user: {user.email}")
-            raise InvalidCredentials(
-                message="Current password is incorrect"
-            )
+            raise InvalidCredentials()
 
         # Verify new passwords match (additional validation)
         if password_data.new_password != password_data.confirm_password:
-            raise ValidationError(
-                message="New passwords do not match",
-                details={"field": "confirm_password"}
-            )
+            raise ValidationError("New passwords do not match")
 
         # Hash new password
         hashed_password = get_password_hash(password_data.new_password)
@@ -277,42 +272,38 @@ class UserService:
     @staticmethod
     def get_all_users(
         db: Session,
+        tenant_id: UUID,
         skip: int = 0,
         limit: int = 100,
-        tenant_id: Optional[int] = None,
         role: Optional[UserRole] = None
     ) -> List[User]:
         """
-        Get all users with optional filtering
+        Get all users for a tenant with optional role filtering
         
         Args:
             db: Database session
+            tenant_id: Tenant ID (required - multi-tenant)
             skip: Number of records to skip
             limit: Maximum number of records
-            tenant_id: Optional tenant filter
             role: Optional role filter
         
         Returns:
-            List of users
+            List of users in tenant
         """
-        query = db.query(User)
+        users = get_tenant_users(db, tenant_id)
         
-        if tenant_id:
-            query = query.filter(User.tenant_id == tenant_id)
-        
+        # Filter by role if provided
         if role:
-            query = query.filter(User.role == role)
+            users = [u for u in users if u.user_tenants and any(ut.role == role for ut in u.user_tenants)]
         
-        users = query.offset(skip).limit(limit).all()
-        
-        return users
+        return users[skip:skip + limit]
 
     @staticmethod
-    def update_user(
+    def update_user_profile_admin(
         db: Session,
-        user_id: int,
+        user_id: UUID,
         update_data: UserUpdate,
-        tenant_id: int
+        tenant_id: UUID
     ) -> User:
         """
         Update user details (admin only, same tenant)
@@ -327,47 +318,58 @@ class UserService:
             Updated user
         
         Raises:
-            ResourceNotFoundError: If user not found
+            ResourceNotFoundError: If user not found or not in tenant
             ValidationError: If validation fails
         """
+        # Verify user is in this tenant
         user = get_user(db, user_id)
-        if not user or user.tenant_id != tenant_id:
-            raise ResourceNotFoundError(
-                message="User not found",
-                details={"user_id": user_id}
-            )
+        if not user:
+            raise ResourceNotFoundError("User not found")
+        
+        # Check if user is member of tenant
+        user_tenant = db.query(UserTenant).filter(
+            UserTenant.user_id == user_id,
+            UserTenant.tenant_id == tenant_id
+        ).first()
+        
+        if not user_tenant:
+            raise ResourceNotFoundError("User not found in this tenant")
 
         update_dict = update_data.model_dump(exclude_unset=True)
         
-        # Auto-generate full_name if first/last names changed
-        if 'first_name' in update_dict or 'last_name' in update_dict:
-            first = update_dict.get('first_name', user.first_name) or ''
-            last = update_dict.get('last_name', user.last_name) or ''
-            update_dict['full_name'] = f"{first} {last}".strip()
+        if not update_dict:
+            return user
         
-        # Validate unique admin if role changed to admin
-        if update_dict.get('role') == UserRole.admin and user.role != UserRole.admin:
-            existing_admin = db.query(User).filter(
-                User.tenant_id == tenant_id,
-                User.role == UserRole.admin,
-                User.id != user_id
+        # If role is being updated, validate unique admin constraint
+        if 'role' in update_dict and update_dict['role'] == UserRole.admin:
+            existing_admin = db.query(UserTenant).filter(
+                UserTenant.tenant_id == tenant_id,
+                UserTenant.role == UserRole.admin,
+                UserTenant.user_id != user_id
             ).first()
             if existing_admin:
                 raise ValidationError("Only one admin allowed per tenant")
-
-        user = update_user(db, user_id, update_dict)
+        
+        # Update user or user_tenant based on field
+        if 'role' in update_dict:
+            role = update_dict.pop('role')
+            update_user_role(db, user_id, tenant_id, role)
+        
+        if update_dict:
+            user = update_user(db, user_id, update_dict)
+        
         logger.info(f"User updated: {user.email}")
 
         return user
 
     @staticmethod
-    def get_user_by_id(db: Session, user_id: int) -> User:
+    def get_user_by_id(db: Session, user_id: UUID) -> User:
         """
         Get user by ID
         
         Args:
             db: Database session
-            user_id: User ID
+            user_id: User ID (UUID)
         
         Returns:
             User object
@@ -377,14 +379,11 @@ class UserService:
         """
         user = get_user(db, user_id)
         if not user:
-            raise ResourceNotFoundError(
-                message="User not found",
-                details={"user_id": user_id}
-            )
+            raise ResourceNotFoundError("User not found")
         return user
 
     @staticmethod
-    def delete_user_account(db: Session, user_id: int, tenant_id: int) -> bool:
+    def delete_user_account(db: Session, user_id: UUID, tenant_id: UUID) -> bool:
         """
         Delete user account (admin only, same tenant)
         
@@ -397,14 +396,21 @@ class UserService:
             True if deletion successful
         
         Raises:
-            ResourceNotFoundError: If user not found
+            ResourceNotFoundError: If user not found or not in tenant
         """
+        # Verify user exists
         user = get_user(db, user_id)
-        if not user or user.tenant_id != tenant_id:
-            raise ResourceNotFoundError(
-                message="User not found",
-                details={"user_id": user_id}
-            )
+        if not user:
+            raise ResourceNotFoundError("User not found")
+        
+        # Verify user is in this tenant
+        user_tenant = db.query(UserTenant).filter(
+            UserTenant.user_id == user_id,
+            UserTenant.tenant_id == tenant_id
+        ).first()
+        
+        if not user_tenant:
+            raise ResourceNotFoundError("User not found in this tenant")
 
         delete_user(db, user_id)
         logger.info(f"User deleted: {user.email}")

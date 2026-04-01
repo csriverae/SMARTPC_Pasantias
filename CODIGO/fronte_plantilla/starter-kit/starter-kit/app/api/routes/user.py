@@ -61,10 +61,8 @@ def register(
     
     - **email**: User email (must be unique)
     - **password**: Password (min 6 characters)
-    - **tenant_id**: Tenant ID (required)
-    - **first_name**: Optional first name
-    - **last_name**: Optional last name
-    - **full_name**: Optional full name (auto-generated if not provided)
+    - **tenant_id**: Tenant ID (required, UUID format)
+    - **role**: User role (admin or employee)
     """
     user, access_token = user_service.register_user(db, user_data)
     
@@ -74,7 +72,7 @@ def register(
             "access_token": access_token,
             "token_type": "bearer",
             "expires_in": 3600,
-            "tenant_id": user.tenant_id,
+            "tenant_id": str(user_data.tenant_id),
         }
     )
 
@@ -97,6 +95,13 @@ def login(
     """
     user, access_token, refresh_token = user_service.login_user(db, login_data)
     
+    # Get tenant_id from user's first tenant membership
+    from app.models.user import UserTenant
+    user_tenant = db.query(UserTenant).filter(
+        UserTenant.user_id == user.id
+    ).first()
+    tenant_id = str(user_tenant.tenant_id) if user_tenant else None
+    
     return success_response(
         message="Login successful",
         data={
@@ -104,7 +109,7 @@ def login(
             "refresh_token": refresh_token,
             "token_type": "bearer",
             "expires_in": 3600,
-            "tenant_id": user.tenant_id,
+            "tenant_id": tenant_id,
         }
     )
 
@@ -215,11 +220,20 @@ def delete_account(
     db: Session = Depends(get_db)
 ):
     """Delete authenticated user account"""
-    user_service.delete_user_account(db, current_user.id)
+    # Get current user's tenant from token claims
+    # This requires tenant_id to be in token claims - handled by get_current_user
+    # For now, get first tenant of user
+    from app.models.user import UserTenant
+    user_tenant = db.query(UserTenant).filter(
+        UserTenant.user_id == current_user.id
+    ).first()
+    
+    if user_tenant:
+        user_service.delete_user_account(db, current_user.id, user_tenant.tenant_id)
     
     return success_response(
         message="User account deleted successfully",
-        data={"user_id": current_user.id}
+        data={"user_id": str(current_user.id)}
     )
 
 
@@ -227,7 +241,7 @@ def delete_account(
 
 @router.get(
     "/users",
-    response_model=List[UserListResponse],
+
     status_code=status.HTTP_200_OK,
     summary="List all users (Admin only)",
     tags=["Admin"]
@@ -240,13 +254,28 @@ def list_users(
     db: Session = Depends(get_db)
 ):
     """
-    Get list of all users (Admin only)
+    Get list of all users in tenant (Admin only)
     
     - **skip**: Number of records to skip (pagination)
     - **limit**: Maximum number of records to return
     - **role**: Optional filter by user role (admin or employee)
     """
-    users = user_service.get_all_users(db, skip=skip, limit=limit, tenant_id=current_user.tenant_id)
+    # Get current user's tenant from token claims
+    from app.models.user import UserTenant
+    from uuid import UUID
+    
+    user_tenant = db.query(UserTenant).filter(
+        UserTenant.user_id == current_user.id
+    ).first()
+    
+    if not user_tenant:
+        return success_response(
+            message="No users found",
+            data=[]
+        )
+    
+    tenant_id = user_tenant.tenant_id
+    users = user_service.get_all_users(db, tenant_id, skip=skip, limit=limit, role=role)
     
     return success_response(
         message=f"Retrieved {len(users)} users",
@@ -256,27 +285,32 @@ def list_users(
 
 @router.get(
     "/users/{user_id}",
-    response_model=UserResponse,
     status_code=status.HTTP_200_OK,
     summary="Get user by ID (Admin only)",
     tags=["Admin"]
 )
-def get_user_by_id(
-    user_id: int,
+def get_user_by_id_endpoint(
+    user_id: str,
     current_user: User = Depends(require_admin()),
     db: Session = Depends(get_db)
 ):
     """
     Get specific user by ID (Admin only)
     
-    - **user_id**: User ID to retrieve
+    - **user_id**: User ID to retrieve (UUID format)
     """
-    user = user_service.get_user_by_id(db, user_id)
+    from uuid import UUID
     
-    return success_response(
-        message="User retrieved successfully",
-        data=user
-    )
+    try:
+        user_uuid = UUID(user_id)
+        user = user_service.get_user_by_id(db, user_uuid)
+        
+        return success_response(
+            message="User retrieved successfully",
+            data=user
+        )
+    except ValueError:
+        return not_found_response("Invalid user ID format")
 
 
 @router.patch(
@@ -285,8 +319,8 @@ def get_user_by_id(
     summary="Update user (Admin only)",
     tags=["Admin"]
 )
-def update_user(
-    user_id: int,
+def update_user_endpoint(
+    user_id: str,
     update_data: UserUpdate,
     current_user: User = Depends(require_admin()),
     db: Session = Depends(get_db)
@@ -294,19 +328,35 @@ def update_user(
     """
     Update user details (Admin only)
     
-    - **user_id**: User ID to update
+    - **user_id**: User ID to update (UUID format)
     """
-    updated_user = user_service.update_user(
-        db,
-        user_id,
-        update_data,
-        current_user.tenant_id
-    )
+    from uuid import UUID
     
-    return success_response(
-        message="User updated successfully",
-        data=updated_user
-    )
+    try:
+        user_uuid = UUID(user_id)
+        
+        # Get admin's tenant from token
+        from app.models.user import UserTenant
+        admin_tenant = db.query(UserTenant).filter(
+            UserTenant.user_id == current_user.id
+        ).first()
+        
+        if not admin_tenant:
+            return unauthorized_response("Admin has no tenant assignment")
+        
+        updated_user = user_service.update_user_profile_admin(
+            db,
+            user_uuid,
+            update_data,
+            admin_tenant.tenant_id
+        )
+        
+        return success_response(
+            message="User updated successfully",
+            data=updated_user
+        )
+    except ValueError:
+        return not_found_response("Invalid user ID format")
 
 
 @router.delete(
@@ -316,18 +366,34 @@ def update_user(
     tags=["Admin"]
 )
 def delete_user_endpoint(
-    user_id: int,
+    user_id: str,
     current_user: User = Depends(require_admin()),
     db: Session = Depends(get_db)
 ):
     """
     Delete specific user (Admin only)
     
-    - **user_id**: User ID to delete
+    - **user_id**: User ID to delete (UUID format)
     """
-    user_service.delete_user_account(db, user_id, current_user.tenant_id)
+    from uuid import UUID
     
-    return success_response(
-        message="User deleted successfully",
-        data={"user_id": user_id}
-    )
+    try:
+        user_uuid = UUID(user_id)
+        
+        # Get admin's tenant from token
+        from app.models.user import UserTenant
+        admin_tenant = db.query(UserTenant).filter(
+            UserTenant.user_id == current_user.id
+        ).first()
+        
+        if not admin_tenant:
+            return unauthorized_response("Admin has no tenant assignment")
+        
+        user_service.delete_user_account(db, user_uuid, admin_tenant.tenant_id)
+        
+        return success_response(
+            message="User deleted successfully",
+            data={"user_id": user_id}
+        )
+    except ValueError:
+        return not_found_response("Invalid user ID format")

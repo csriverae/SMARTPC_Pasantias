@@ -1,0 +1,232 @@
+{
+  "info": {
+    "_postman_id": "mesapass-uuid-multitenancy",
+    "name": "MesaPass - Usuarios y Autenticación",
+    "description": "API de MesaPass - Gestión de Usuarios con Multi-Tenancy",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "👤 AUTENTICACIÓN",
+      "item": [
+        {
+          "name": "1️⃣ Registrar Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"AdminPassword123\",\n  \"first_name\": \"Carlos\",\n  \"last_name\": \"Rivera\",\n  \"full_name\": \"Carlos Rivera\",\n  \"role\": \"admin\",\n  \"tenant_id\": \"96261def-bc6b-422a-9592-edaaa1874662\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/register",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "register"]
+            },
+            "description": "Registra un nuevo administrador en el tenant"
+          }
+        },
+        {
+          "name": "2️⃣ Registrar Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"employee@company.com\",\n  \"password\": \"EmployeePass123\",\n  \"first_name\": \"Juan\",\n  \"last_name\": \"Pérez\",\n  \"full_name\": \"Juan Pérez\",\n  \"role\": \"employee\",\n  \"tenant_id\": \"96261def-bc6b-422a-9592-edaaa1874662\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/register",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "register"]
+            },
+            "description": "Registra un nuevo empleado en el tenant"
+          }
+        },
+        {
+          "name": "3️⃣ Login Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@company.com\",\n  \"password\": \"AdminPassword123\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/login",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "login"]
+            },
+            "description": "Login del administrador"
+          }
+        },
+        {
+          "name": "4️⃣ Login Employee",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"employee@company.com\",\n  \"password\": \"EmployeePass123\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/login",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "login"]
+            },
+            "description": "Login del empleado"
+          }
+        }
+      ]
+    },
+    {
+      "name": "👥 GESTIÓN DE USUARIOS",
+      "item": [
+        {
+          "name": "5️⃣ Listar Todos los Usuarios (Admin)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_ADMIN_TOKEN"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/users",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "users"]
+            },
+            "description": "Obtiene la lista de todos los usuarios del tenant (solo admin)"
+          }
+        },
+        {
+          "name": "6️⃣ Obtener Perfil Actual",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_TOKEN"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/me",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "me"]
+            },
+            "description": "Obtiene el perfil del usuario autenticado"
+          }
+        },
+        {
+          "name": "7️⃣ Actualizar Usuario",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_ADMIN_TOKEN"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"first_name\": \"Juan Carlos\",\n  \"last_name\": \"Pérez García\",\n  \"role\": \"employee\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/users/USER_ID",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "users", "USER_ID"]
+            },
+            "description": "Actualiza los datos de un usuario (solo admin)"
+          }
+        },
+        {
+          "name": "8️⃣ Cambiar Contraseña",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_TOKEN"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"current_password\": \"OldPassword123\",\n  \"new_password\": \"NewPassword456\",\n  \"confirm_password\": \"NewPassword456\"\n}"
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/change-password",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "change-password"]
+            },
+            "description": "Cambia la contraseña del usuario autenticado"
+          }
+        },
+        {
+          "name": "9️⃣ Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer YOUR_ADMIN_TOKEN"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8000/auth/users/USER_ID",
+              "protocol": "http",
+              "host": ["127", "0", "0", "1"],
+              "port": "8000",
+              "path": ["auth", "users", "USER_ID"]
+            },
+            "description": "Elimina un usuario (solo admin)"
+          }
+        }
+      ]
+    }
+  ]
+}

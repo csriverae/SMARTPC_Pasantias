@@ -1,22 +1,26 @@
 """
-Tenant model for multi-tenant SaaS
+Tenant model for multi-tenant SaaS with UUID
 """
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime
+from uuid import uuid4
+from sqlalchemy import Column, String, DateTime
+from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import relationship
 from app.db.base import Base
 
 
 class Tenant(Base):
-    """Tenant (Company/Organization) model"""
+    """Tenant (Company/Organization) model with UUID"""
     __tablename__ = "tenants"
 
-    id = Column(Integer, primary_key=True, index=True)
-    name = Column(String(255), unique=True, nullable=False, index=True)
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4, index=True)
+    name = Column(String(255), nullable=False, index=True)
     slug = Column(String(255), unique=True, nullable=False, index=True)
-    description = Column(String(500), nullable=True)
-    is_active = Column(Integer, default=1)
+    type = Column(String(50), nullable=False, default="company")  # company, restaurant
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    # Relationships
+    user_tenants = relationship("UserTenant", back_populates="tenant", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Tenant(id={self.id}, name={self.name}, slug={self.slug})>"
+        return f"<Tenant(id={self.id}, name={self.name}, type={self.type})>"

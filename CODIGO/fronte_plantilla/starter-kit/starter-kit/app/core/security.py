@@ -97,6 +97,9 @@ def verify_token(token: str) -> dict[str, Any] | None:
 
 def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     from app.crud.user import get_user_by_email
+    from app.models.user import UserTenant
+    from uuid import UUID
+    
     payload = verify_token(token)
     if payload is None or payload.get("sub") is None:
         raise HTTPException(
@@ -105,6 +108,8 @@ def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
             headers={"WWW-Authenticate": "Bearer"},
         )
     email = payload.get("sub")
+    tenant_id_str = payload.get("tenant_id")
+    
     user = get_user_by_email(db, email)
     if user is None:
         raise HTTPException(
@@ -112,17 +117,34 @@ def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
             detail="User not found",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    
+    # Attach tenant_id and role to user object from token for easy access in routes
+    if tenant_id_str:
+        try:
+            user.tenant_id = UUID(tenant_id_str)
+            user.role_name = payload.get("role", "employee")
+        except (ValueError, TypeError):
+            pass
+    
     return user
 
 
 def require_roles(*allowed_roles: str):
-    def role_checker(current_user=Depends(get_current_user)):
-        user_role = getattr(current_user, "role", None)
-        if user_role is None or user_role.value not in allowed_roles:
+    def role_checker(token: str = Depends(oauth2_scheme)):
+        payload = verify_token(token)
+        if payload is None:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Could not validate credentials",
+            )
+        
+        user_role = payload.get("role", "employee")
+        if user_role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Operation not permitted for your role",
             )
-        return current_user
+        
+        return payload
 
     return role_checker
