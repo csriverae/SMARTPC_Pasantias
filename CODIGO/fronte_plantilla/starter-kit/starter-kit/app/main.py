@@ -4,11 +4,12 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from app.api.routes.user import router
+from app.api.routes.entities import router as entities_router
 from app.db.session import engine
 from app.db.base import Base
 
 # Import models so metadata is populated before create_all
-from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog  # noqa: F401
+from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog, Tenant, UserTenant  # noqa: F401
 
 
 @asynccontextmanager
@@ -59,6 +60,7 @@ async def validation_exception_handler(request, exc: RequestValidationError):
 
 
 app.include_router(router, prefix="/auth", tags=["auth"])
+app.include_router(entities_router, prefix="/api", tags=["entities"])
 
 
 @app.get("/")

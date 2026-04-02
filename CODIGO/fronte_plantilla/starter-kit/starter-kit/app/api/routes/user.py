@@ -8,6 +8,7 @@ from app.db.session import SessionLocal
 from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, PasswordChangeRequest
 from app.schemas.response import SuccessResponse, ErrorResponse
 from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email, delete_user, update_user_password
+from app.crud.tenant import get_user_tenants, get_tenant_by_id
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -123,6 +124,19 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
         access_token = create_access_token(data=token_data)
         refresh_token = create_refresh_token(data=token_data)
 
+        # Get user tenants
+        user_tenants = get_user_tenants(db, db_user.id)
+        tenants_data = []
+        for ut in user_tenants:
+            tenant = get_tenant_by_id(db, str(ut.tenant_id))
+            if tenant:
+                tenants_data.append({
+                    "tenant_id": str(tenant.id),
+                    "tenant_name": tenant.name,
+                    "tenant_type": tenant.type,
+                    "role": ut.role
+                })
+
         return JSONResponse(
             status_code=200,
             content={
@@ -133,7 +147,8 @@ def login(user: UserLogin, db: Session = Depends(get_db)):
                     "data": [{
                         "access_token": access_token,
                         "refresh_token": refresh_token,
-                        "token_type": "bearer"
+                        "token_type": "bearer",
+                        "tenants": tenants_data
                     }]
                 }
             }
@@ -406,3 +421,53 @@ def change_password(password_change: PasswordChangeRequest, current_user=Depends
                 "data": {"data": [], "error": str(e)}
             }
         )
+
+
+@router.get("/tenants/me")
+def get_my_tenants(current_user=Depends(get_current_user), db: Session = Depends(get_db)):
+    try:
+        user_tenants = get_user_tenants(db, current_user.id)
+        tenants_data = []
+        for ut in user_tenants:
+            tenant = get_tenant_by_id(db, str(ut.tenant_id))
+            if tenant:
+                tenants_data.append({
+                    "tenant_id": str(tenant.id),
+                    "tenant_name": tenant.name,
+                    "tenant_type": tenant.type,
+                    "role": ut.role
+                })
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Tenants obtenidos exitosamente",
+                "status": 200,
+                "error": False,
+                "data": {"data": tenants_data}
+            }
+        )
+    except Exception as e:
+        print(f"Get tenants error: {e}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al obtener tenants",
+                "status": 500,
+                "error": True,
+                "data": {"data": []}
+            }
+        )
+
+
+@router.post("/tenants/select")
+def select_tenant():
+    return JSONResponse(
+        status_code=200,
+        content={
+            "message": "Tenant seleccionado",
+            "status": 200,
+            "error": False,
+            "data": {"data": []}
+        }
+    )

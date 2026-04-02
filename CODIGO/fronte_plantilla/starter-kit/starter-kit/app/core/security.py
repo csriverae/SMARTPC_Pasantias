@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta
 from typing import Any, Generator
 
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 import bcrypt
@@ -112,3 +112,23 @@ def require_roles(*allowed_roles: str):
         return current_user
 
     return role_checker
+
+
+def get_current_tenant(request: Request, current_user=Depends(get_current_user), db=Depends(get_db)):
+    from app.crud.tenant import get_user_tenants
+    tenant_id = request.headers.get("X-Tenant-ID")
+    if not tenant_id:
+        print("Tenant actual: None (no header)")
+        return None  # No tenant specified, allow for backward compatibility
+
+    # Check if user belongs to this tenant
+    user_tenants = get_user_tenants(db, current_user.id)
+    tenant_ids = [str(ut.tenant_id) for ut in user_tenants]
+    if tenant_id not in tenant_ids:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="User does not belong to the specified tenant",
+        )
+
+    print(f"Tenant actual: {tenant_id}")
+    return tenant_id

@@ -21,3 +21,4 @@ class User(Base):
     role = Column(Enum(UserRole), nullable=False, default=UserRole.employee)
 
     restaurants = relationship("Restaurant", back_populates="user")
+    user_tenants = relationship("UserTenant", back_populates="user")

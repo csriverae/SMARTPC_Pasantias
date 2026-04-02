@@ -1,18 +1,67 @@
-import { Fragment } from 'react'
+'use client'
 
-const stats = [
-  { label: 'Users', value: '1,280', icon: 'tabler-users', change: '+14%' },
-  { label: 'Revenue', value: '$25,400', icon: 'tabler-dollar-sign', change: '+8%' },
-  { label: 'Orders', value: '455', icon: 'tabler-shopping-cart', change: '+5%' },
-  { label: 'Sessions', value: '7,922', icon: 'tabler-activity', change: '+10%' }
-]
+import { Fragment, useState, useEffect } from 'react'
+import api from '@/utils/api'
 
 export default function Page() {
+  const [stats, setStats] = useState([
+    { label: 'Empresas', value: '0', icon: 'tabler-building', change: 'Cargando...' },
+    { label: 'Empleados', value: '0', icon: 'tabler-users', change: 'Cargando...' },
+    { label: 'Consumos', value: '0', icon: 'tabler-shopping-cart', change: 'Cargando...' },
+    { label: 'Sesiones', value: '0', icon: 'tabler-activity', change: 'Cargando...' }
+  ])
+  const [companies, setCompanies] = useState([])
+  const [employees, setEmployees] = useState([])
+  const [mealLogs, setMealLogs] = useState([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [companiesRes, employeesRes, mealLogsRes] = await Promise.all([
+          api.get('/api/companies'),
+          api.get('/api/employees'),
+          api.get('/api/meal-logs')
+        ])
+
+        const companiesData = companiesRes.data.data || []
+        const employeesData = employeesRes.data.data || []
+        const mealLogsData = mealLogsRes.data.data || []
+
+        setCompanies(companiesData)
+        setEmployees(employeesData)
+        setMealLogs(mealLogsData)
+
+        setStats([
+          { label: 'Empresas', value: companiesData.length.toString(), icon: 'tabler-building', change: 'Total registrado' },
+          { label: 'Empleados', value: employeesData.length.toString(), icon: 'tabler-users', change: 'Total registrado' },
+          { label: 'Consumos', value: mealLogsData.length.toString(), icon: 'tabler-shopping-cart', change: 'Total registrado' },
+          { label: 'Sesiones', value: '1', icon: 'tabler-activity', change: 'Activa' }
+        ])
+      } catch (error) {
+        console.error('Error loading data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [])
+
+  if (loading) {
+    return (
+      <div className='py-6 px-6 sm:px-8'>
+        <h1 className='text-3xl font-bold tracking-tight text-slate-900 mb-5'>Dashboard</h1>
+        <p className='text-sm text-slate-500 mb-8'>Cargando datos...</p>
+      </div>
+    )
+  }
+
   return (
     <Fragment>
       <div className='py-6 px-6 sm:px-8'>
         <h1 className='text-3xl font-bold tracking-tight text-slate-900 mb-5'>Dashboard</h1>
-        <p className='text-sm text-slate-500 mb-8'>Bienvenido a Mesapass (fase 1): tu panel principal con datos de ejemplo y diseño Vuexy.</p>
+        <p className='text-sm text-slate-500 mb-8'>Bienvenido a Mesapass: tu panel principal con datos reales del backend.</p>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6'>
           {stats.map(item => (
@@ -26,7 +75,7 @@ export default function Page() {
                   <i className={item.icon}></i>
                 </span>
               </div>
-              <p className='text-xs text-emerald-500 mt-3'>{item.change} desde la última semana</p>
+              <p className='text-xs text-emerald-500 mt-3'>{item.change}</p>
             </article>
           ))}
         </div>
@@ -34,48 +83,56 @@ export default function Page() {
         <div className='grid gap-4 lg:grid-cols-2'>
           <section className='bg-white border border-slate-200 rounded-xl p-4 shadow-sm'>
             <header className='flex items-center justify-between mb-3'>
-              <h2 className='text-lg font-semibold text-slate-900'>Actividad reciente</h2>
-              <span className='text-xs text-slate-500'>Últimas 24h</span>
+              <h2 className='text-lg font-semibold text-slate-900'>Empresas Registradas</h2>
+              <span className='text-xs text-slate-500'>{companies.length} total</span>
             </header>
             <ul className='space-y-3'>
-              <li className='flex justify-between items-center p-2 rounded-md hover:bg-slate-100'>
-                <span>Usuario Juan completó un pago</span>
-                <span className='text-xs text-slate-500'>15m</span>
-              </li>
-              <li className='flex justify-between items-center p-2 rounded-md hover:bg-slate-100'>
-                <span>Nuevo registro en el portal</span>
-                <span className='text-xs text-slate-500'>45m</span>
-              </li>
-              <li className='flex justify-between items-center p-2 rounded-md hover:bg-slate-100'>
-                <span>Reporte de error en API</span>
-                <span className='text-xs text-slate-500'>1h</span>
-              </li>
+              {companies.slice(0, 5).map(company => (
+                <li key={company.id} className='flex justify-between items-center p-2 rounded-md hover:bg-slate-100'>
+                  <span>{company.name}</span>
+                  <span className='text-xs text-slate-500'>ID: {company.id}</span>
+                </li>
+              ))}
+              {companies.length === 0 && (
+                <li className='text-sm text-slate-500'>No hay empresas registradas</li>
+              )}
             </ul>
           </section>
           <section className='bg-white border border-slate-200 rounded-xl p-4 shadow-sm'>
             <header className='flex items-center justify-between mb-3'>
-              <h2 className='text-lg font-semibold text-slate-900'>Tareas pendientes</h2>
-              <span className='text-xs text-slate-500'>Progreso</span>
+              <h2 className='text-lg font-semibold text-slate-900'>Empleados Registrados</h2>
+              <span className='text-xs text-slate-500'>{employees.length} total</span>
             </header>
             <ul className='space-y-3'>
-              <li>
-                <p className='text-sm text-slate-700 mb-1'>Integrar login con PostgreSQL</p>
-                <div className='h-2 rounded-full bg-slate-100 overflow-hidden'>
-                  <div className='h-full w-1/4 bg-indigo-500' />
-                </div>
-              </li>
-              <li>
-                <p className='text-sm text-slate-700 mb-1'>Crear tablas de usuario y sesión</p>
-                <div className='h-2 rounded-full bg-slate-100 overflow-hidden'>
-                  <div className='h-full w-1/3 bg-indigo-500' />
-                </div>
-              </li>
-              <li>
-                <p className='text-sm text-slate-700 mb-1'>Validación de frontend en fase 1</p>
-                <div className='h-2 rounded-full bg-slate-100 overflow-hidden'>
-                  <div className='h-full w-2/3 bg-indigo-500' />
-                </div>
-              </li>
+              {employees.slice(0, 5).map(employee => (
+                <li key={employee.id} className='flex justify-between items-center p-2 rounded-md hover:bg-slate-100'>
+                  <span>{employee.name} - {employee.email}</span>
+                  <span className='text-xs text-slate-500'>ID: {employee.id}</span>
+                </li>
+              ))}
+              {employees.length === 0 && (
+                <li className='text-sm text-slate-500'>No hay empleados registrados</li>
+              )}
+            </ul>
+          </section>
+        </div>
+
+        <div className='mt-6'>
+          <section className='bg-white border border-slate-200 rounded-xl p-4 shadow-sm'>
+            <header className='flex items-center justify-between mb-3'>
+              <h2 className='text-lg font-semibold text-slate-900'>Registros de Consumo Recientes</h2>
+              <span className='text-xs text-slate-500'>{mealLogs.length} total</span>
+            </header>
+            <ul className='space-y-3'>
+              {mealLogs.slice(0, 10).map(log => (
+                <li key={log.id} className='flex justify-between items-center p-2 rounded-md hover:bg-slate-100'>
+                  <span>Empleado ID {log.employee_id} - {log.meal_type} - ${log.total_amount}</span>
+                  <span className='text-xs text-slate-500'>{log.date}</span>
+                </li>
+              ))}
+              {mealLogs.length === 0 && (
+                <li className='text-sm text-slate-500'>No hay registros de consumo</li>
+              )}
             </ul>
           </section>
         </div>

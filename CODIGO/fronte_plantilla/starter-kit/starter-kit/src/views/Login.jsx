@@ -162,10 +162,15 @@ const LoginV2 = ({ mode }) => {
                     return
                   }
 
-                  localStorage.setItem('token', data.access_token)
+                  localStorage.setItem('token', data.data.data[0].access_token)
 
-                  if (data.refresh_token) {
-                    localStorage.setItem('refresh_token', data.refresh_token)
+                  if (data.data.data[0].refresh_token) {
+                    localStorage.setItem('refresh_token', data.data.data[0].refresh_token)
+                  }
+
+                  // Guardar tenant_id del primer tenant
+                  if (data.data.data[0].tenants && data.data.data[0].tenants.length > 0) {
+                    localStorage.setItem('tenant_id', data.data.data[0].tenants[0].tenant_id)
                   }
 
                   try {

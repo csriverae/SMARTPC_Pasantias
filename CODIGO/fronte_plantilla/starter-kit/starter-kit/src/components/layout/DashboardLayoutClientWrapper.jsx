@@ -2,12 +2,19 @@
 
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(true)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    if (!token) {
+      router.push('/login')
+    }
+  }, [router])
 
   const isActive = (href) => {
     return pathname === href || pathname.endsWith(href)
@@ -15,6 +22,9 @@ export default function DashboardLayout({ children }) {
 
   const menuItems = [
     { title: 'Dashboard', href: '/home', icon: '📊' },
+    { title: 'Empresas', href: '/companies', icon: '🏢' },
+    { title: 'Empleados', href: '/employees', icon: '👥' },
+    { title: 'Consumos', href: '/meal-logs', icon: '🍽️' },
     { title: 'Profile', href: '/profile', icon: '👤' },
     { title: 'Settings', href: '/settings', icon: '⚙️' },
     { title: 'Pricing', href: '/pricing', icon: '💰' },

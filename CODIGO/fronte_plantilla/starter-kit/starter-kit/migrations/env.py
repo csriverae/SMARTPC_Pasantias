@@ -8,7 +8,7 @@ from alembic import context
 
 # Import Base and models for autogenerate support
 from app.db.base import Base
-from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog
+from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog, Tenant, UserTenant
 from app.core.config import Settings
 
 settings = Settings()
