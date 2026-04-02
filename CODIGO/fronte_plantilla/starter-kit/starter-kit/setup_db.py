@@ -9,7 +9,7 @@ try:
         host="localhost",
         port=5434,
         user="postgres",
-        password="1234",
+        password="1324",
         dbname="postgres"
     )
     conn.autocommit = True

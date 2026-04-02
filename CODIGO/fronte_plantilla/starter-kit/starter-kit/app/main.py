@@ -1,5 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from contextlib import asynccontextmanager
 from app.api.routes.user import router
 from app.db.session import engine
@@ -27,6 +29,34 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# Exception handlers
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request, exc: RequestValidationError):
+    """Handle pydantic validation errors with custom format"""
+    errors = []
+    for error in exc.errors():
+        field = ".".join(str(x) for x in error["loc"][1:])
+        message = error["msg"]
+        errors.append({
+            "field": field,
+            "message": message
+        })
+    
+    return JSONResponse(
+        status_code=422,
+        content={
+            "message": "Error de validación en los datos enviados",
+            "status": 422,
+            "error": True,
+            "data": {
+                "data": [],
+                "errors": errors
+            }
+        }
+    )
+
 
 app.include_router(router, prefix="/auth", tags=["auth"])
 

@@ -5,11 +5,11 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 
 
 class Settings(BaseSettings):
-    DB_USER: str
-    DB_PASSWORD: str
-    DB_HOST: str
-    DB_PORT: int
-    DB_NAME: str
+    DB_USER: str = "postgres"
+    DB_PASSWORD: str = "1324"
+    DB_HOST: str = "localhost"
+    DB_PORT: int = 5434
+    DB_NAME: str = "mesa_db"
     SECRET_KEY: str = "your-secret-key"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30

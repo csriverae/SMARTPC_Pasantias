@@ -4,7 +4,7 @@ from typing import Any, Generator
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
-from passlib.context import CryptContext
+import bcrypt
 
 from app.core.config import settings
 from app.db.session import SessionLocal
@@ -14,23 +14,33 @@ ALGORITHM = settings.ALGORITHM
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.ACCESS_TOKEN_EXPIRE_MINUTES
 REFRESH_TOKEN_EXPIRE_DAYS = settings.REFRESH_TOKEN_EXPIRE_DAYS
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 
 def get_password_hash(password: str) -> str:
-    # Truncate password to 72 bytes for bcrypt compatibility
+    """Hash a password using bcrypt with 72-byte limit."""
+    if not isinstance(password, str) or len(password) == 0:
+        raise ValueError("La contraseña debe ser una cadena no vacía")
+
     password_bytes = password.encode('utf-8')[:72]
-    password = password_bytes.decode('utf-8', errors='ignore')
-    return pwd_context.hash(password)
+    if len(password_bytes) > 72:
+        raise ValueError("La contraseña es demasiado larga. Máximo 72 bytes UTF-8 permitidos por bcrypt")
+
+    hashed = bcrypt.hashpw(password_bytes, bcrypt.gensalt())
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    # Truncate password to 72 bytes for bcrypt compatibility
+    """Verify a plain password against bcrypt hash with 72-byte limit."""
+    if not isinstance(plain_password, str) or not isinstance(hashed_password, str):
+        return False
+
     password_bytes = plain_password.encode('utf-8')[:72]
-    plain_password = password_bytes.decode('utf-8', errors='ignore')
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(password_bytes, hashed_password.encode('utf-8'))
+    except ValueError:
+        return False
+
 
 
 def get_db() -> Generator:
