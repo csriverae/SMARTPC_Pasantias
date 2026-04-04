@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Generator
+import uuid
 
 from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
@@ -132,3 +133,8 @@ def get_current_tenant(request: Request, current_user=Depends(get_current_user),
 
     print(f"Tenant actual: {tenant_id}")
     return tenant_id
+
+
+def generate_unique_token() -> str:
+    """Generate a unique token for QR codes"""
+    return str(uuid.uuid4().hex[:16]).upper()
