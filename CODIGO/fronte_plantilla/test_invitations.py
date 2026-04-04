@@ -133,6 +133,7 @@ def test_database_setup():
         register_data = {
             "email": "test@test.com",
             "password": "123456",
+            "full_name": "Test User",
             "tenant_name": "Test Company"
         }
 
