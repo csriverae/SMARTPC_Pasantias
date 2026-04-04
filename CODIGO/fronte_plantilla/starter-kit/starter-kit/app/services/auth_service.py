@@ -68,7 +68,7 @@ class AuthService:
         }
 
     @staticmethod
-    def register_owner(db: Session, email: str, password: str, tenant_name: str):
+    def register_owner(db: Session, email: str, password: str, full_name: str, tenant_name: str):
         """Register a new tenant owner and create tenant automatically"""
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
@@ -87,7 +87,7 @@ class AuthService:
         new_user = User(
             email=email,
             password=get_password_hash(password),
-            full_name=None,
+            full_name=full_name,
             role=UserRole.admin
         )
         db.add(new_user)

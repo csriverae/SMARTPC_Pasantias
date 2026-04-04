@@ -109,7 +109,8 @@ def invite_user(
             db=db,
             email=invite_data.email,
             tenant_id=tenant_id,
-            invited_by=current_user.id
+            invited_by=current_user.id,
+            role=invite_data.role
         )
         
         return JSONResponse(

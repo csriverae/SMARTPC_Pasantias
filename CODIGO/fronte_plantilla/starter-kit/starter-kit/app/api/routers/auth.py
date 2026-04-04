@@ -15,6 +15,7 @@ router = APIRouter()
 class UserRegister(BaseModel):
     email: str
     password: str
+    full_name: str
     tenant_name: str
 
 
@@ -37,6 +38,7 @@ def register(register_data: UserRegister, db: Session = Depends(get_db)):
             db=db,
             email=register_data.email,
             password=register_data.password,
+            full_name=register_data.full_name,
             tenant_name=register_data.tenant_name
         )
 

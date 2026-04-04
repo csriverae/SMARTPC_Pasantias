@@ -22,3 +22,4 @@ class User(Base):
 
     restaurants = relationship("Restaurant", back_populates="user")
     user_tenants = relationship("UserTenant", back_populates="user")
+    sent_invitations = relationship("UserInvitation", back_populates="inviter")
