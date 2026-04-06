@@ -78,18 +78,3 @@ class QRService:
             )
         
         return employee
-        employee = db.query(Employee).filter(Employee.qr_token == qr_token).first()
-        
-        if not employee:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Token QR inválido"
-            )
-        
-        if employee.company_tenant_id != tenant_id:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Acceso denegado"
-            )
-        
-        return employee

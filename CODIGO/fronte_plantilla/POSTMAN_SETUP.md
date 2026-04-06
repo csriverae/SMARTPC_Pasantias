@@ -1,4 +1,4 @@
-# Configuración Postman para Registrar Usuarios
+# Configuración Postman para MesaPass SaaS - Flujo Completo
 
 ## Base de Datos Configurada ✅
 - **Host**: localhost
@@ -11,62 +11,110 @@
 
 ### 1️⃣ Importar la Colección
 1. Abre Postman
-2. Click en `Import` 
-3. Selecciona el archivo `Mesapass_Postman_Collection.json` (en la raíz del proyecto)
+2. Click en `Import`
+3. Selecciona el archivo `Proyecto_MESAPASS_COMPLETE.json`
 4. Haz click en `Import`
 
-### 2️⃣ Asegurate que el Backend esté Corriendo
+### 2️⃣ Configurar Variables de Entorno
+En Postman, configura estas variables:
+- `base_url`: `http://127.0.0.1:8000`
+- `token`: (se configura automáticamente)
+- `tenant_id`: (se configura automáticamente)
+- `company_id`: (se configura automáticamente)
+- `restaurant_id`: (se configura automáticamente)
+- `employee_id`: (se configura automáticamente)
+- `agreement_id`: (se configura automáticamente)
+
+### 3️⃣ Asegurate que el Backend esté Corriendo
 ```bash
 # En la carpeta starter-kit/starter-kit
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+python run_server.py
 ```
 
-### 3️⃣ Usar la Colección - Flujo Recomendado
+### 4️⃣ Flujo Completo de Pruebas - Orden Recomendado
 
-#### **A. Registrar un nuevo usuario**
-1. Abre el request **"Register User"**
-2. Modifica el body con los datos que desees:
-```json
-{
-  "email": "tuusuario@example.com",
-  "password": "TuContraseña123",
-  "first_name": "Tu",
-  "last_name": "Nombre",
-  "full_name": "Tu Nombre Completo",
-  "role": "employee"  // pode rser: admin, restaurant_admin, company_admin, employee
-}
-```
-3. Haz click en **Send**
-4. ✅ El usuario se registrará en la BD PostgreSQL
+#### **A. Autenticación**
+1. **Login** → Obtiene token y tenant_id automáticamente
+2. **Get Current User** → Verifica autenticación
 
-#### **B. Iniciar Sesión**
-1. Abre el request **"Login User"**
-2. Modifica el email y contraseña con los que registraste
-3. Haz click en **Send**
-4. ✅ Los tokens se guardarán automáticamente en las variables (access_token y refresh_token)
+#### **B. Crear Entidades Base**
+1. **Create Company** → Crea una compañía (guarda company_id)
+2. **Create Restaurant** → Crea un restaurante (guarda restaurant_id)
 
-#### **C. Verificar Usuario Actual**
-1. Abre el request **"Get Current User"**
-2. Haz click en **Send**
-3. ✅ Verás los datos del usuario conectado
+#### **C. Crear Acuerdos**
+1. **Create Agreement** → Crea acuerdo entre compañía y restaurante (guarda agreement_id)
 
-### 4️⃣ Variables Automáticas
-Después de Login, estas variables se guardan automáticamente:
-- `{{base_url}}` - localhost:8000
-- `{{access_token}}` - Tu token de acceso
-- `{{refresh_token}}` - Tu token de refresco
+#### **D. Gestionar Empleados**
+1. **Create Employee** → Crea empleado en la compañía (guarda employee_id y qr_token)
+2. **Get Employees** → Lista empleados
+3. **Get Employee QR** → Obtiene código QR del empleado
 
-### 5️⃣ Endpoints Disponibles
+#### **E. Validación QR**
+1. **Validate QR** → Valida token QR del empleado
 
-| Método | Endpoint | Descripción | Requiere Auth |
-|--------|----------|-------------|---------------|
-| POST | `/auth/register` | Registrar nuevo usuario | ❌ No |
-| POST | `/auth/login` | Iniciar sesión | ❌ No |
-| POST | `/auth/refresh` | Refrescar token | ❌ No |
-| GET | `/auth/me` | Obtener usuario actual | ✅ Sí |
-| GET | `/auth/users` | Listar todos los usuarios | ✅ Sí (Admin) |
-| DELETE | `/auth/users/{id}` | Eliminar usuario | ✅ Sí (Admin) |
-| GET | `/health` | Health check | ❌ No |
+#### **F. Registros de Comidas**
+1. **Create Meal Log** → Registra consumo de comida
+2. **Get Meal Logs** → Lista registros de comidas
+
+#### **G. Reportes**
+1. **Consumption Report** → Reporte de consumo por empleado
+2. **Billing Report** → Reporte de facturación
+
+### 5️⃣ Variables Automáticas
+Después de cada request exitoso, estas variables se guardan automáticamente:
+- `token` - Token de acceso JWT
+- `tenant_id` - ID del tenant actual
+- `company_id` - ID de la compañía creada
+- `restaurant_id` - ID del restaurante creado
+- `employee_id` - ID del empleado creado
+- `qr_token` - Token QR del empleado
+- `agreement_id` - ID del acuerdo creado
+
+### 6️⃣ Endpoints Disponibles por Categoría
+
+#### 🔐 **Auth**
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/auth/login` | Iniciar sesión |
+| GET | `/auth/me` | Obtener usuario actual |
+
+#### 🏢 **Entities**
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/companies` | Crear compañía |
+| GET | `/api/companies` | Listar compañías |
+| POST | `/api/restaurants` | Crear restaurante |
+| GET | `/api/restaurants` | Listar restaurantes |
+
+#### 🤝 **Agreements**
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/agreements` | Crear acuerdo |
+| GET | `/api/agreements` | Listar acuerdos |
+
+#### 👥 **Employees**
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/employees` | Crear empleado |
+| GET | `/api/employees` | Listar empleados |
+| GET | `/api/employees/{id}/qr` | Obtener QR de empleado |
+
+#### 📱 **QR**
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/validate` | Validar token QR |
+
+#### 🍽️ **Meal Logs**
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| POST | `/api/meal-logs` | Crear registro de comida |
+| GET | `/api/meal-logs` | Listar registros |
+
+#### 📊 **Reports**
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/reports/consumption` | Reporte de consumo |
+| GET | `/api/reports/billing` | Reporte de facturación |
 
 ## 🔍 Verificar en PostgreSQL
 
@@ -76,27 +124,47 @@ Para ver que los datos se guardaron en la BD:
 # Conectarte a la BD
 psql -h localhost -p 5434 -U postgres -d mesa_db
 
-# Dentro de psql, verifica los usuarios registrados:
-SELECT id, email, full_name, role FROM users;
+# Verificar datos creados:
+SELECT id, name FROM companies;
+SELECT id, name FROM restaurants;
+SELECT id, company_id, restaurant_id FROM agreements;
+SELECT id, name, email FROM employees;
+SELECT id, employee_id, meal_type FROM meal_logs;
 ```
 
 ## 📌 Notas Importantes
 
-1. ⚠️ La contraseña debe tener al menos 6 caracteres
-2. ⚠️ El email debe ser único
-3. ⚠️ Después de registrar, debes hacer Login para obtener tokens
-4. ✅ Los tokens se guardan automáticamente en variables de Postman
-5. ✅ Los tokens expiran después de 30 minutos (access_token)
+1. ⚠️ Todos los endpoints requieren header `X-Tenant-ID` para multi-tenancy
+2. ⚠️ Las entidades deben crearse en orden: Company → Restaurant → Agreement → Employee
+3. ✅ Los IDs se guardan automáticamente en variables de Postman
+4. ✅ El sistema es multi-tenant: cada usuario pertenece a un tenant específico
+5. ✅ Los tokens JWT expiran después de 30 minutos
 
 ## 🆘 Troubleshooting
 
-### Error: "Connection refused" o "Network error"
+### Error: "Connection refused"
 ```
 ❌ El backend no está corriendo
-✅ Asegurate de ejecutar: uvicorn app.main:app --reload --port 8000
+✅ Ejecuta: python run_server.py
 ```
 
-### Error: "Email already registered"
+### Error: Foreign key violation
+```
+❌ Entidades padre no existen (company_id, restaurant_id)
+✅ Sigue el orden: Company → Restaurant → Agreement → Employee
+```
+
+### Error: "User does not belong to tenant"
+```
+❌ Token no incluye tenant válido
+✅ Asegurate de hacer Login primero para obtener tenant_id
+```
+
+### Error: "Field required"
+```
+❌ Faltan campos requeridos en el body
+✅ Revisa la documentación del schema en cada endpoint
+```
 ```
 ❌ El email ya existe en la base de datos
 ✅ Usa un email diferente o elimina el usuario de la BD
