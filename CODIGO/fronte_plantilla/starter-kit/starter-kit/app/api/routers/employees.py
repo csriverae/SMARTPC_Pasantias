@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from app.db.session import SessionLocal
 from app.services.employee_service import EmployeeService
-from app.core.security import get_current_user
+from app.core.security import get_current_user, get_current_tenant
 from pydantic import BaseModel
 from uuid import UUID
 
@@ -35,7 +35,7 @@ def get_db():
 def create_employee(
     employee_data: EmployeeCreate,
     current_user=Depends(get_current_user),
-    tenant_id: str = None,
+    tenant_id: str = Depends(get_current_tenant),
     db: Session = Depends(get_db)
 ):
     """
@@ -110,7 +110,7 @@ def create_employee(
 @router.get("/employees", tags=["Employees"])
 def get_employees(
     current_user=Depends(get_current_user),
-    tenant_id: str = None,
+    tenant_id: str = Depends(get_current_tenant),
     company_id: int = None,
     db: Session = Depends(get_db)
 ):
@@ -187,7 +187,7 @@ def get_employees(
 def get_employee(
     employee_id: int,
     current_user=Depends(get_current_user),
-    tenant_id: str = None,
+    tenant_id: str = Depends(get_current_tenant),
     db: Session = Depends(get_db)
 ):
     """
@@ -256,7 +256,7 @@ def get_employee(
 def delete_employee(
     employee_id: int,
     current_user=Depends(get_current_user),
-    tenant_id: str = None,
+    tenant_id: str = Depends(get_current_tenant),
     db: Session = Depends(get_db)
 ):
     """
