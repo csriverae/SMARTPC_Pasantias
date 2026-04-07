@@ -55,6 +55,10 @@ export default function Page() {
             <p className='text-slate-900 font-medium capitalize'>{user.role}</p>
           </div>
           <div>
+            <label className='block text-sm font-medium text-slate-700 mb-1'>Tenant</label>
+            <p className='text-slate-900 font-medium'>{user.tenant_name || 'N/A'}</p>
+          </div>
+          <div>
             <label className='block text-sm font-medium text-slate-700 mb-1'>Status</label>
             <div className='flex items-center gap-2'>
               <span className='w-3 h-3 bg-green-500 rounded-full'></span>

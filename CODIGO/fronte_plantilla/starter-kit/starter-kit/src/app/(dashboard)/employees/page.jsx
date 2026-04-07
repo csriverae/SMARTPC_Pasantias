@@ -11,6 +11,7 @@ export default function EmployeesPage() {
   const [formData, setFormData] = useState({ name: '', email: '', company_id: '' })
   const [error, setError] = useState('')
   const [copiedToken, setCopiedToken] = useState(null)
+  const [qrModal, setQrModal] = useState({ show: false, employee: null, imageUrl: null })
 
   useEffect(() => {
     loadData()
@@ -50,6 +51,24 @@ export default function EmployeesPage() {
     navigator.clipboard.writeText(token)
     setCopiedToken(token)
     setTimeout(() => setCopiedToken(null), 2000)
+  }
+
+  const showQR = async (employee) => {
+    try {
+      const response = await api.get(`/api/employees/${employee.id}/qr`, { responseType: 'blob' })
+      const imageUrl = URL.createObjectURL(response.data)
+      setQrModal({ show: true, employee, imageUrl })
+    } catch (error) {
+      console.error('Error fetching QR:', error)
+      setError('Error cargando QR')
+    }
+  }
+
+  const closeQRModal = () => {
+    if (qrModal.imageUrl) {
+      URL.revokeObjectURL(qrModal.imageUrl)
+    }
+    setQrModal({ show: false, employee: null, imageUrl: null })
   }
 
   if (loading) {
@@ -147,6 +166,12 @@ export default function EmployeesPage() {
                       >
                         {copiedToken === employee.qr_token ? '✓ Copiado' : 'Copiar'}
                       </button>
+                      <button
+                        onClick={() => showQR(employee)}
+                        className='text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors'
+                      >
+                        Ver QR
+                      </button>
                     </div>
                   </div>
 
@@ -159,6 +184,28 @@ export default function EmployeesPage() {
           )}
         </div>
       </div>
+
+      {/* QR Modal */}
+      {qrModal.show && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+          <div className='bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4'>
+            <div className='flex justify-between items-center mb-4'>
+              <h3 className='text-lg font-semibold'>QR de {qrModal.employee?.name}</h3>
+              <button
+                onClick={closeQRModal}
+                className='text-gray-500 hover:text-gray-700 text-xl'
+              >
+                ×
+              </button>
+            </div>
+            {qrModal.imageUrl && (
+              <div className='flex justify-center'>
+                <img src={qrModal.imageUrl} alt='QR Code' className='max-w-full h-auto' />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

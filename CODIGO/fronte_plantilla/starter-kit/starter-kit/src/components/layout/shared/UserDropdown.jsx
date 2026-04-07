@@ -57,12 +57,13 @@ const UserDropdown = () => {
       if (savedUser) {
         try {
           const parsed = JSON.parse(savedUser)
+          const normalized = parsed?.data?.data || parsed
 
-          if (parsed.email) {
+          if (normalized.email) {
             setUser({
-              full_name: parsed.full_name || parsed.email,
-              email: parsed.email,
-              avatar: parsed.avatar || '/images/avatars/1.png'
+              full_name: normalized.full_name || normalized.email,
+              email: normalized.email,
+              avatar: normalized.avatar || '/images/avatars/1.png'
             })
 
             return
@@ -73,24 +74,28 @@ const UserDropdown = () => {
       }
 
       const token = localStorage.getItem('token')
+      const tenant = localStorage.getItem('tenant_id')
 
-      if (!token) return
+      if (!token || !tenant) return
 
       try {
         const response = await fetch('http://localhost:8000/auth/me', {
           headers: {
             Authorization: `Bearer ${token}`,
+            'X-Tenant-ID': tenant,
             'Content-Type': 'application/json'
           }
         })
 
         if (response.ok) {
-          const data = await response.json()
+          const result = await response.json()
+          const data = result?.data?.data || result
 
           setUser({
             full_name: data.full_name || data.email || 'John Doe',
             email: data.email || 'admin@vuexy.com',
-            avatar: data.avatar || '/images/avatars/1.png'
+            avatar: data.avatar || '/images/avatars/1.png',
+            role: data.role || data.tenant_role
           })
           localStorage.setItem('user', JSON.stringify(data))
         }

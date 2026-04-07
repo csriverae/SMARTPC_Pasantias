@@ -56,15 +56,15 @@ const MaskImg = styled('img')({
   zIndex: -1
 })
 
-const LoginV2 = ({ mode }) => {
+const LoginV2 = ({ mode, initialRegister = false }) => {
   // States
   const [isPasswordShown, setIsPasswordShown] = useState(false)
-  const [isRegister, setIsRegister] = useState(false)
+  const [isRegister, setIsRegister] = useState(initialRegister)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [role, setRole] = useState('employee')
+  const [tenantName, setTenantName] = useState('')
   const [loading, setLoading] = useState(false)
 
   // Vars
@@ -133,9 +133,8 @@ const LoginV2 = ({ mode }) => {
                 ? JSON.stringify({
                     email,
                     password,
-                    first_name: firstName,
-                    last_name: lastName,
-                    role,
+                    full_name: `${firstName} ${lastName}`.trim(),
+                    tenant_name: tenantName
                   })
                 : JSON.stringify({ email, password })
 
@@ -150,51 +149,53 @@ const LoginV2 = ({ mode }) => {
 
                 if (response.ok) {
                   const data = await response.json()
+                  const authData = data?.data?.data || {}
 
-                  if (isRegister) {
-                    alert('Usuario creado con éxito. Ahora puedes iniciar sesión.')
-                    setIsRegister(false)
-                    setFirstName('')
-                    setLastName('')
-                    setRole('employee')
-                    setPassword('')
-
-                    return
+                  if (!authData.access_token) {
+                    throw new Error('No se recibió access_token del servidor')
                   }
 
-                  localStorage.setItem('token', data.data.data[0].access_token)
-
-                  if (data.data.data[0].refresh_token) {
-                    localStorage.setItem('refresh_token', data.data.data[0].refresh_token)
+                  const backendUser = authData.user || {}
+                  const normalizedUser = {
+                    ...backendUser,
+                    role: backendUser.role || backendUser.tenant_role || backendUser.role
                   }
 
-                  // Guardar tenant_id del primer tenant
-                  if (data.data.data[0].tenants && data.data.data[0].tenants.length > 0) {
-                    localStorage.setItem('tenant_id', data.data.data[0].tenants[0].tenant_id)
+                  localStorage.setItem('token', authData.access_token)
+
+                  if (authData.refresh_token) {
+                    localStorage.setItem('refresh_token', authData.refresh_token)
                   }
+
+                  localStorage.setItem('tenant_id', authData.tenant_id)
+                  localStorage.setItem('user', JSON.stringify(normalizedUser))
 
                   try {
                     const meResponse = await fetch('http://localhost:8000/auth/me', {
                       headers: {
-                        Authorization: `Bearer ${data.access_token}`,
+                        Authorization: `Bearer ${authData.access_token}`,
+                        'X-Tenant-ID': authData.tenant_id,
                         'Content-Type': 'application/json'
                       }
                     })
 
                     if (meResponse.ok) {
                       const currentUser = await meResponse.json()
-
-                      localStorage.setItem('user', JSON.stringify(currentUser))
+                      const parsedUser = currentUser?.data?.data || currentUser
+                      const normalizedMeUser = {
+                        ...parsedUser,
+                        role: parsedUser.role || parsedUser.tenant_role || normalizedUser.role
+                      }
+                      localStorage.setItem('user', JSON.stringify(normalizedMeUser))
                     }
                   } catch (err) {
-                    console.warn('No se pudo obtener el usuario después del login:', err)
+                    console.warn('No se pudo obtener el usuario después del login/registro:', err)
                   }
 
                   router.push('/home')
                 } else {
                   const errorData = await response.json()
-
-                  alert(errorData.detail || (isRegister ? 'Registro fallido' : 'Login fallido'))
+                  alert(errorData.detail || errorData.message || (isRegister ? 'Registro fallido' : 'Login fallido'))
                 }
               } catch (error) {
                 console.error(isRegister ? 'Register error:' : 'Login error:', error)
@@ -209,26 +210,26 @@ const LoginV2 = ({ mode }) => {
               <>
                 <CustomTextField
                   fullWidth
-                  label='First Name'
-                  placeholder='Enter your first name'
+                  label='Nombre'
+                  placeholder='Ingrese su nombre'
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
                 />
                 <CustomTextField
                   fullWidth
-                  label='Last Name'
-                  placeholder='Enter your last name'
+                  label='Apellido'
+                  placeholder='Ingrese su apellido'
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
                 />
                 <CustomTextField
                   fullWidth
-                  label='Role'
-                  placeholder='admin or employee'
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
+                  label='Nombre de la empresa'
+                  placeholder='Ingrese el nombre de la empresa'
+                  value={tenantName}
+                  onChange={(e) => setTenantName(e.target.value)}
                   required
                 />
               </>
@@ -283,7 +284,7 @@ const LoginV2 = ({ mode }) => {
                   setPassword('')
                   setFirstName('')
                   setLastName('')
-                  setRole('employee')
+                  setTenantName('')
                 }}
               >
                 {isRegister ? 'Go to login' : 'Create an account'}

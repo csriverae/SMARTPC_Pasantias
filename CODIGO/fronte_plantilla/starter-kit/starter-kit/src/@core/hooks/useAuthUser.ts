@@ -8,6 +8,7 @@ export interface AuthUser {
   email: string
   role: 'admin' | 'employee'
   avatar?: string
+  tenant_name?: string
 }
 
 export interface UseAuthUserReturn {
@@ -32,7 +33,12 @@ export const useAuthUser = (): UseAuthUserReturn => {
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser)
-          setUser(parsedUser)
+          const normalizedUser = parsedUser?.data?.data || parsedUser
+          const role = normalizedUser.role || normalizedUser.tenant_role
+          if (role) {
+            normalizedUser.role = role
+          }
+          setUser(normalizedUser)
           setLoading(false)
           return
         } catch (e) {
@@ -48,10 +54,12 @@ export const useAuthUser = (): UseAuthUserReturn => {
         return
       }
 
+      const tenant = localStorage.getItem('tenant_id')
       const response = await fetch('http://localhost:8000/auth/me', {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
+          'X-Tenant-ID': tenant || '',
           'Content-Type': 'application/json'
         }
       })
@@ -60,7 +68,12 @@ export const useAuthUser = (): UseAuthUserReturn => {
         throw new Error(`Error: ${response.status} ${response.statusText}`)
       }
 
-      const userData = await response.json()
+      const json = await response.json()
+      const userData = json?.data?.data || json
+      const role = userData.role || userData.tenant_role
+      if (role) {
+        userData.role = role
+      }
       setUser(userData)
       // Guardar en localStorage para futuras cargas
       localStorage.setItem('user', JSON.stringify(userData))

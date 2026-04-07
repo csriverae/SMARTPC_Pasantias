@@ -3,11 +3,13 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
+import { useAuthUser } from '@core/hooks/useAuthUser'
 
 export default function DashboardLayout({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(true)
+  const { user, loading } = useAuthUser()
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -16,22 +18,43 @@ export default function DashboardLayout({ children }) {
     }
   }, [router])
 
+  useEffect(() => {
+    if (!loading && !user) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('tenant_id')
+      localStorage.removeItem('user')
+      router.push('/login')
+    }
+  }, [loading, user, router])
+
   const isActive = (href) => {
     return pathname === href || pathname.endsWith(href)
   }
 
   const menuItems = [
-    { title: 'Dashboard', href: '/home', icon: '📊' },
-    { title: 'Empresas', href: '/companies', icon: '🏢' },
-    { title: 'Restaurantes', href: '/restaurants', icon: '🍽️' },
-    { title: 'Acuerdos', href: '/agreements', icon: '📋' },
-    { title: 'Empleados', href: '/employees', icon: '👥' },
-    { title: 'Validar QR', href: '/qr-validator', icon: '📱' },
-    { title: 'Consumos', href: '/meal-logs', icon: '🥘' },
-    { title: 'Reportes', href: '/reports', icon: '📊' },
+    { title: 'Home', href: '/home', icon: '🏠' },
+    { title: 'About', href: '/about', icon: 'ℹ️' },
     { title: 'Profile', href: '/profile', icon: '👤' },
     { title: 'Settings', href: '/settings', icon: '⚙️' },
+    { title: 'Tenants', href: '/tenants', icon: '🏢' },
+    { title: 'Users', href: '/users', icon: '👥', roles: ['admin'] },
+    { title: 'Employees', href: '/employees', icon: '👨‍💼' },
+    { title: 'Agreements', href: '/agreements', icon: '📋' },
+    { title: 'Meal Logs', href: '/meal-logs', icon: '🥘' },
+    { title: 'Reports', href: '/reports', icon: '📊' },
   ]
+
+  const filteredMenuItems = user
+    ? menuItems.filter((item) => !item.roles || item.roles.includes(user.role))
+    : []
+
+  if (loading) {
+    return (
+      <div className='flex items-center justify-center min-h-screen'>
+        <div className='text-slate-600'>Cargando información del usuario...</div>
+      </div>
+    )
+  }
 
   return (
     <div className='flex bg-slate-50 min-h-screen'>
@@ -55,7 +78,7 @@ export default function DashboardLayout({ children }) {
 
         {/* Navigation Menu */}
         <nav className='flex-1 p-4 space-y-2'>
-          {menuItems.map((item) => (
+          {filteredMenuItems.map((item) => (
             <Link
               key={item.href}
               href={item.href}
