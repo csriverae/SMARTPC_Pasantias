@@ -80,7 +80,7 @@ def get_employee_qr(
         )
 
 
-@router.post("/validate", tags=["QR"])
+@router.post("/validate-qr", tags=["QR"])
 def validate_qr(
     qr_data: QRValidateRequest,
     current_user=Depends(get_current_user),

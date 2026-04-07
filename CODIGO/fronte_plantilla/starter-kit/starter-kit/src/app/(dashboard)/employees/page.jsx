@@ -8,7 +8,9 @@ export default function EmployeesPage() {
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({ name: '', email: '', cedula: '' })
+  const [formData, setFormData] = useState({ name: '', email: '', company_id: '' })
+  const [error, setError] = useState('')
+  const [copiedToken, setCopiedToken] = useState(null)
 
   useEffect(() => {
     loadData()
@@ -24,6 +26,7 @@ export default function EmployeesPage() {
       setCompanies(compRes.data.data || [])
     } catch (error) {
       console.error('Error loading data:', error)
+      setError('Error cargando datos')
     } finally {
       setLoading(false)
     }
@@ -32,14 +35,21 @@ export default function EmployeesPage() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
+      setError('')
       await api.post('/api/employees', formData)
-      setFormData({ name: '', email: '', cedula: '' })
+      setFormData({ name: '', email: '', company_id: '' })
       setShowForm(false)
       loadData()
     } catch (error) {
       console.error('Error creating employee:', error)
-      alert('Error creando empleado')
+      setError(error.response?.data?.message || 'Error creando empleado')
     }
+  }
+
+  const copyToClipboard = (token) => {
+    navigator.clipboard.writeText(token)
+    setCopiedToken(token)
+    setTimeout(() => setCopiedToken(null), 2000)
   }
 
   if (loading) {
@@ -57,6 +67,12 @@ export default function EmployeesPage() {
           {showForm ? 'Cancelar' : 'Nuevo Empleado'}
         </button>
       </div>
+
+      {error && (
+        <div className='bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4'>
+          {error}
+        </div>
+      )}
 
       {showForm && (
         <div className='bg-white p-6 rounded-lg shadow-md mb-6'>
@@ -83,18 +99,22 @@ export default function EmployeesPage() {
               />
             </div>
             <div>
-              <label className='block text-sm font-medium mb-1'>Cédula</label>
-              <input
-                type='text'
-                value={formData.cedula}
-                onChange={(e) => setFormData({...formData, cedula: e.target.value})}
+              <label className='block text-sm font-medium mb-1'>Empresa</label>
+              <select
+                value={formData.company_id}
+                onChange={(e) => setFormData({...formData, company_id: e.target.value})}
                 className='w-full p-2 border rounded-lg'
                 required
-              />
+              >
+                <option value=''>Seleccionar empresa</option>
+                {companies.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
             </div>
             <button
               type='submit'
-              className='bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700'
+              className='bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 w-full'
             >
               Crear Empleado
             </button>
@@ -108,13 +128,31 @@ export default function EmployeesPage() {
           {employees.length === 0 ? (
             <p className='text-gray-500'>No hay empleados registrados</p>
           ) : (
-            <div className='space-y-4'>
+            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
               {employees.map(employee => (
-                <div key={employee.id} className='border rounded-lg p-4'>
-                  <h3 className='font-semibold'>{employee.name}</h3>
-                  <p className='text-sm text-gray-600'>Email: {employee.email}</p>
-                  <p className='text-sm text-gray-600'>Cédula: {employee.cedula || 'N/A'}</p>
-                  <p className='text-sm text-gray-600'>ID: {employee.id}</p>
+                <div key={employee.id} className='border-2 rounded-lg p-4 hover:shadow-lg transition-shadow'>
+                  <h3 className='font-semibold text-lg'>{employee.name}</h3>
+                  <p className='text-sm text-gray-600 mb-2'>Email: {employee.email}</p>
+                  <p className='text-sm text-gray-600 mb-3'>Empresa: {companies.find(c => c.id === employee.company_id)?.name || 'N/A'}</p>
+                  
+                  <div className='bg-gray-50 rounded p-3 mb-3'>
+                    <p className='text-xs font-medium text-gray-600 mb-1'>Token QR:</p>
+                    <div className='flex items-center gap-2'>
+                      <code className='text-xs font-mono font-bold text-blue-600 flex-1'>
+                        {employee.qr_token}
+                      </code>
+                      <button
+                        onClick={() => copyToClipboard(employee.qr_token)}
+                        className='text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 transition-colors'
+                      >
+                        {copiedToken === employee.qr_token ? '✓ Copiado' : 'Copiar'}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className='text-xs text-gray-500 space-y-1'>
+                    <p>ID: {employee.id}</p>
+                  </div>
                 </div>
               ))}
             </div>

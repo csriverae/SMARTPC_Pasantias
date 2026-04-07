@@ -23,12 +23,14 @@ export default function DashboardLayout({ children }) {
   const menuItems = [
     { title: 'Dashboard', href: '/home', icon: '📊' },
     { title: 'Empresas', href: '/companies', icon: '🏢' },
+    { title: 'Restaurantes', href: '/restaurants', icon: '🍽️' },
+    { title: 'Acuerdos', href: '/agreements', icon: '📋' },
     { title: 'Empleados', href: '/employees', icon: '👥' },
-    { title: 'Consumos', href: '/meal-logs', icon: '🍽️' },
+    { title: 'Validar QR', href: '/qr-validator', icon: '📱' },
+    { title: 'Consumos', href: '/meal-logs', icon: '🥘' },
+    { title: 'Reportes', href: '/reports', icon: '📊' },
     { title: 'Profile', href: '/profile', icon: '👤' },
     { title: 'Settings', href: '/settings', icon: '⚙️' },
-    { title: 'Pricing', href: '/pricing', icon: '💰' },
-    { title: 'FAQ', href: '/faq', icon: '❓' }
   ]
 
   return (
