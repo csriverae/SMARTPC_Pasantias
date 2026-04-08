@@ -27,17 +27,17 @@ export default function Page() {
 
     // Validation
     if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-      setPasswordError('All fields are required')
+      setPasswordError('Todos los campos son requeridos')
       return
     }
 
     if (passwordForm.newPassword.length < 6) {
-      setPasswordError('New password must be at least 6 characters')
+      setPasswordError('La nueva contraseña debe tener al menos 6 caracteres')
       return
     }
 
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('New passwords do not match')
+      setPasswordError('Las nuevas contraseñas no coinciden')
       return
     }
 

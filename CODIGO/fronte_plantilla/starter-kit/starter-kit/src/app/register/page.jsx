@@ -5,8 +5,8 @@ import LoginV2 from '@views/Login'
 import { getServerMode } from '@core/utils/serverHelpers'
 
 export const metadata = {
-  title: 'Register',
-  description: 'Create a new account'
+  title: 'MesaPass - Crear Cuenta',
+  description: 'Crea una nueva cuenta en MesaPass'
 }
 
 const RegisterPage = async () => {

@@ -5,8 +5,8 @@ import LoginV2 from '@views/Login'
 import { getServerMode } from '@core/utils/serverHelpers'
 
 export const metadata = {
-  title: 'Login',
-  description: 'Login to your account'
+  title: 'MesaPass - Iniciar Sesión',
+  description: 'Inicia sesión en MesaPass para gestionar tu sistema de alimentación'
 }
 
 const LoginPage = async () => {

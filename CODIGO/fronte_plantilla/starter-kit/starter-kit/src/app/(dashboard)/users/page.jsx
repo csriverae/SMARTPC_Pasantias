@@ -10,6 +10,7 @@ export default function UsersPage() {
   const [formData, setFormData] = useState({ email: '', role: 'employee' })
   const [error, setError] = useState('')
   const [successMessage, setSuccessMessage] = useState('')
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, user: null })
 
   useEffect(() => {
     loadUsers()
@@ -43,6 +44,26 @@ export default function UsersPage() {
     } catch (error) {
       console.error('Error inviting user:', error)
       setError(error.response?.data?.message || 'Error enviando invitación')
+    }
+  }
+
+  const confirmDelete = (user) => {
+    setDeleteConfirm({ show: true, user })
+  }
+
+  const handleDelete = async () => {
+    if (!deleteConfirm.user) return
+
+    try {
+      setError('')
+      setSuccessMessage('')
+      await api.delete(`/api/users/${deleteConfirm.user.id}`)
+      setDeleteConfirm({ show: false, user: null })
+      setSuccessMessage('Usuario eliminado correctamente')
+      loadUsers()
+    } catch (error) {
+      console.error('Error deleting user:', error)
+      setError(error.response?.data?.message || 'Error eliminando usuario')
     }
   }
 
@@ -124,6 +145,7 @@ export default function UsersPage() {
                     <th className='text-left py-3 px-4'>Email</th>
                     <th className='text-left py-3 px-4'>Nombre</th>
                     <th className='text-left py-3 px-4'>Rol</th>
+                    <th className='text-left py-3 px-4'>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -132,6 +154,14 @@ export default function UsersPage() {
                       <td className='py-3 px-4'>{user.email}</td>
                       <td className='py-3 px-4'>{user.full_name || '-'}</td>
                       <td className='py-3 px-4 capitalize'>{user.role}</td>
+                      <td className='py-3 px-4'>
+                        <button
+                          onClick={() => confirmDelete(user)}
+                          className='text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition-colors'
+                        >
+                          Eliminar
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -140,6 +170,41 @@ export default function UsersPage() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.show && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+          <div className='bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4'>
+            <div className='flex justify-between items-center mb-4'>
+              <h3 className='text-lg font-semibold text-red-600'>Confirmar Eliminación</h3>
+              <button
+                onClick={() => setDeleteConfirm({ show: false, user: null })}
+                className='text-gray-500 hover:text-gray-700 text-xl'
+              >
+                ×
+              </button>
+            </div>
+            <p className='text-gray-700 mb-4'>
+              ¿Estás seguro de que quieres eliminar al usuario <strong>{deleteConfirm.user?.email}</strong>?
+              Esta acción no se puede deshacer.
+            </p>
+            <div className='flex gap-3'>
+              <button
+                onClick={() => setDeleteConfirm({ show: false, user: null })}
+                className='flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300'
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                className='flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700'
+              >
+                Eliminar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

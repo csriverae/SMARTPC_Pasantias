@@ -14,7 +14,7 @@ export default function MealLogsPage() {
     agreement_id: '',
     meal_type: 'almuerzo',
     consumption_date: new Date().toISOString().split('T')[0],
-    quantity: '1'
+    total_amount: '0.00'
   })
   const [error, setError] = useState('')
 
@@ -49,7 +49,7 @@ export default function MealLogsPage() {
         ...formData,
         employee_id: parseInt(formData.employee_id),
         agreement_id: parseInt(formData.agreement_id),
-        quantity: parseInt(formData.quantity)
+        total_amount: parseFloat(formData.total_amount)
       }
       await api.post('/api/meal-logs', data)
       setFormData({
@@ -57,7 +57,7 @@ export default function MealLogsPage() {
         agreement_id: '',
         meal_type: 'almuerzo',
         consumption_date: new Date().toISOString().split('T')[0],
-        quantity: '1'
+        total_amount: '0.00'
       })
       setShowForm(false)
       loadData()
@@ -154,12 +154,13 @@ export default function MealLogsPage() {
               </div>
 
               <div>
-                <label className='block text-sm font-medium mb-1'>Cantidad</label>
+                <label className='block text-sm font-medium mb-1'>Monto Total ($)</label>
                 <input
                   type='number'
-                  min='1'
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({...formData, quantity: e.target.value})}
+                  min='0'
+                  step='0.01'
+                  value={formData.total_amount}
+                  onChange={(e) => setFormData({...formData, total_amount: e.target.value})}
                   className='w-full p-2 border rounded-lg'
                   required
                 />
@@ -190,7 +191,7 @@ export default function MealLogsPage() {
                     <th className='text-left py-2 px-4'>Empleado</th>
                     <th className='text-left py-2 px-4'>Tipo de Comida</th>
                     <th className='text-left py-2 px-4'>Fecha</th>
-                    <th className='text-left py-2 px-4'>Cantidad</th>
+                    <th className='text-left py-2 px-4'>Monto Total</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -202,7 +203,7 @@ export default function MealLogsPage() {
                         <td className='py-2 px-4'>{employee?.name || 'N/A'}</td>
                         <td className='py-2 px-4 capitalize'>{log.meal_type}</td>
                         <td className='py-2 px-4'>{log.consumption_date}</td>
-                        <td className='py-2 px-4'>{log.quantity}</td>
+                        <td className='py-2 px-4'>${log.total_amount}</td>
                       </tr>
                     )
                   })}

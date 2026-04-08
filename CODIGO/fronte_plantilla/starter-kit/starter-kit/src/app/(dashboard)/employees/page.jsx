@@ -12,6 +12,7 @@ export default function EmployeesPage() {
   const [error, setError] = useState('')
   const [copiedToken, setCopiedToken] = useState(null)
   const [qrModal, setQrModal] = useState({ show: false, employee: null, imageUrl: null })
+  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, employee: null })
 
   useEffect(() => {
     loadData()
@@ -69,6 +70,24 @@ export default function EmployeesPage() {
       URL.revokeObjectURL(qrModal.imageUrl)
     }
     setQrModal({ show: false, employee: null, imageUrl: null })
+  }
+
+  const confirmDelete = (employee) => {
+    setDeleteConfirm({ show: true, employee })
+  }
+
+  const handleDelete = async () => {
+    if (!deleteConfirm.employee) return
+
+    try {
+      setError('')
+      await api.delete(`/api/employees/${deleteConfirm.employee.id}`)
+      setDeleteConfirm({ show: false, employee: null })
+      loadData()
+    } catch (error) {
+      console.error('Error deleting employee:', error)
+      setError(error.response?.data?.message || 'Error eliminando empleado')
+    }
   }
 
   if (loading) {
@@ -177,6 +196,14 @@ export default function EmployeesPage() {
 
                   <div className='text-xs text-gray-500 space-y-1'>
                     <p>ID: {employee.id}</p>
+                    <div className='flex gap-2 mt-2'>
+                      <button
+                        onClick={() => confirmDelete(employee)}
+                        className='text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition-colors'
+                      >
+                        Eliminar
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -203,6 +230,41 @@ export default function EmployeesPage() {
                 <img src={qrModal.imageUrl} alt='QR Code' className='max-w-full h-auto' />
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.show && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+          <div className='bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4'>
+            <div className='flex justify-between items-center mb-4'>
+              <h3 className='text-lg font-semibold text-red-600'>Confirmar Eliminación</h3>
+              <button
+                onClick={() => setDeleteConfirm({ show: false, employee: null })}
+                className='text-gray-500 hover:text-gray-700 text-xl'
+              >
+                ×
+              </button>
+            </div>
+            <p className='text-gray-700 mb-4'>
+              ¿Estás seguro de que quieres eliminar al empleado <strong>{deleteConfirm.employee?.name}</strong>?
+              Esta acción no se puede deshacer.
+            </p>
+            <div className='flex gap-3'>
+              <button
+                onClick={() => setDeleteConfirm({ show: false, employee: null })}
+                className='flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300'
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleDelete}
+                className='flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700'
+              >
+                Eliminar
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -117,8 +117,8 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
         </Link>
         <div className='flex flex-col gap-6 is-full sm:is-auto md:is-full sm:max-is-[400px] md:max-is-[unset] mbs-11 sm:mbs-14 md:mbs-0'>
           <div className='flex flex-col gap-1'>
-            <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}! 👋🏻`}</Typography>
-            <Typography>Please sign-in to your account and start the adventure</Typography>
+            <Typography variant='h4'>Bienvenido a MesaPass 👋🏻</Typography>
+            <Typography>Inicia sesión en tu cuenta para gestionar tu sistema de alimentación</Typography>
           </div>
           <form
             noValidate
@@ -237,15 +237,15 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
             <CustomTextField 
               autoFocus 
               fullWidth 
-              label='Email or Username' 
-              placeholder='Enter your email or username' 
+              label='Email' 
+              placeholder='Ingrese su email' 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
             />
             <CustomTextField
               fullWidth
-              label='Password'
+              label='Contraseña'
               placeholder='············'
               id='outlined-adornment-password'
               type={isPasswordShown ? 'text' : 'password'}
@@ -265,16 +265,16 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
               }}
             />
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
-              <FormControlLabel control={<Checkbox />} label='Remember me' />
+              <FormControlLabel control={<Checkbox />} label='Recordarme' />
               <Typography className='text-end' color='primary.main' component={Link}>
-                Forgot password?
+                ¿Olvidaste tu contraseña?
               </Typography>
             </div>
             <Button fullWidth variant='contained' type='submit' disabled={loading}>
-              {loading ? (isRegister ? 'Creating...' : 'Logging in...') : (isRegister ? 'Register' : 'Login')}
+              {loading ? (isRegister ? 'Creando cuenta...' : 'Iniciando sesión...') : (isRegister ? 'Crear cuenta' : 'Iniciar sesión')}
             </Button>
             <div className='flex justify-center items-center flex-wrap gap-2'>
-              <Typography>{isRegister ? 'Already have an account?' : 'New on our platform?'}</Typography>
+              <Typography>{isRegister ? '¿Ya tienes cuenta?' : '¿Nuevo en la plataforma?'}</Typography>
               <Typography
                 component={Link}
                 color='primary.main'
@@ -287,7 +287,7 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
                   setTenantName('')
                 }}
               >
-                {isRegister ? 'Go to login' : 'Create an account'}
+                {isRegister ? 'Ir al login' : 'Crear una cuenta'}
               </Typography>
             </div>
             <Divider className='gap-2 text-textPrimary'>or</Divider>

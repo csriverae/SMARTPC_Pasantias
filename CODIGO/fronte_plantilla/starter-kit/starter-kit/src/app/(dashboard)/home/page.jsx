@@ -8,35 +8,42 @@ export default function Page() {
     { label: 'Empresas', value: '0', icon: 'tabler-building', change: 'Cargando...' },
     { label: 'Empleados', value: '0', icon: 'tabler-users', change: 'Cargando...' },
     { label: 'Consumos', value: '0', icon: 'tabler-shopping-cart', change: 'Cargando...' },
-    { label: 'Sesiones', value: '0', icon: 'tabler-activity', change: 'Cargando...' }
+    { label: 'Acuerdos', value: '0', icon: 'tabler-file-text', change: 'Cargando...' }
   ])
   const [companies, setCompanies] = useState([])
   const [employees, setEmployees] = useState([])
   const [mealLogs, setMealLogs] = useState([])
+  const [agreements, setAgreements] = useState([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [companiesRes, employeesRes, mealLogsRes] = await Promise.all([
+        const [companiesRes, employeesRes, mealLogsRes, agreementsRes] = await Promise.all([
           api.get('/api/companies'),
           api.get('/api/employees'),
-          api.get('/api/meal-logs')
+          api.get('/api/meal-logs'),
+          api.get('/api/agreements')
         ])
 
         const companiesData = companiesRes.data.data || []
         const employeesData = employeesRes.data.data || []
         const mealLogsData = mealLogsRes.data.data || []
+        const agreementsData = agreementsRes.data.data || []
 
         setCompanies(companiesData)
         setEmployees(employeesData)
         setMealLogs(mealLogsData)
+        setAgreements(agreementsData)
+
+        // Calculate total consumption amount
+        const totalConsumption = mealLogsData.reduce((sum, log) => sum + (log.total_amount || 0), 0)
 
         setStats([
           { label: 'Empresas', value: companiesData.length.toString(), icon: 'tabler-building', change: 'Total registrado' },
           { label: 'Empleados', value: employeesData.length.toString(), icon: 'tabler-users', change: 'Total registrado' },
-          { label: 'Consumos', value: mealLogsData.length.toString(), icon: 'tabler-shopping-cart', change: 'Total registrado' },
-          { label: 'Sesiones', value: '1', icon: 'tabler-activity', change: 'Activa' }
+          { label: 'Consumos', value: mealLogsData.length.toString(), icon: 'tabler-shopping-cart', change: `$${totalConsumption.toFixed(2)} total` },
+          { label: 'Acuerdos', value: agreementsData.length.toString(), icon: 'tabler-file-text', change: 'Activos' }
         ])
       } catch (error) {
         console.error('Error loading data:', error)
