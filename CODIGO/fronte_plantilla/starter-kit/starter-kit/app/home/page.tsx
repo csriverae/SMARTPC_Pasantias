@@ -12,7 +12,7 @@ export default function Page() {
     <Fragment>
       <div className='py-6 px-6 sm:px-8'>
         <h1 className='text-3xl font-bold tracking-tight text-slate-900 mb-5'>Dashboard</h1>
-        <p className='text-sm text-slate-500 mb-8'>Bienvenido a Mesapass (fase 1): tu panel principal con datos de ejemplo y diseño Vuexy.</p>
+        <p className='text-sm text-slate-500 mb-8'>Bienvenido a MesaPass: tu plataforma integral de gestión de empleados, acuerdos y consumos.</p>
 
         <div className='grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 mb-6'>
           {stats.map(item => (

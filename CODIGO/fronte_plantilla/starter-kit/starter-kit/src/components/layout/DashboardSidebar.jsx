@@ -14,11 +14,11 @@ export default function DashboardSidebar() {
   }
 
   const menuItems = [
-    { title: 'Dashboard', href: '/home', icon: '📊' },
-    { title: 'Profile', href: '/profile', icon: '👤' },
-    { title: 'Settings', href: '/settings', icon: '⚙️' },
-    { title: 'Pricing', href: '/pricing', icon: '💰' },
-    { title: 'FAQ', href: '/faq', icon: '❓' }
+    { title: 'Inicio', href: '/home', icon: '📊' },
+    { title: 'Perfil', href: '/profile', icon: '👤' },
+    { title: 'Configuración', href: '/settings', icon: '⚙️' },
+    { title: 'Planes', href: '/pricing', icon: '💰' },
+    { title: 'Ayuda', href: '/faq', icon: '❓' }
   ]
 
   return (

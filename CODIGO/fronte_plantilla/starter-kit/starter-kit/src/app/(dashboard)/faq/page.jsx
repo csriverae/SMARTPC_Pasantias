@@ -10,33 +10,67 @@ export default function Page() {
       category: 'General',
       questions: [
         {
-          q: '¿Qué es Mesapass?',
-          a: 'Mesapass es una plataforma integral de gestión de restaurantes que te ayuda a administrar empleados, crear menús, gestionar órdenes y mucho más.'
+          q: '¿Qué es MesaPass?',
+          a: 'MesaPass es una plataforma integral para gestionar empleados, acuerdos con restaurantes, registros de consumo y reportes de facturación.'
         },
         {
           q: '¿Cómo puedo empezar?',
-          a: 'Puedes crear una cuenta gratuita en nuestra página principal. El plan Starter es perfecto para comenzar sin costo.'
+          a: 'Crea una cuenta gratuita en el plan Básico. Puedes crear empresas, agregar empleados y comenzar a registrar consumos inmediatamente.'
         },
         {
-          q: '¿Necesito tarjeta de crédito para probar?',
-          a: 'No, puedes probar Mesapass completamente gratis durante 14 días sin proporcionar tu información de pago.'
+          q: '¿Necesito tarjeta de crédito para la prueba?',
+          a: 'No, el plan Básico es completamente gratuito y sin límite de tiempo. Los planes pagados incluyen una prueba de 14 días.'
         }
       ]
     },
     {
-      category: 'Operaciones',
+      category: 'Empleados y Documentos',
       questions: [
         {
-          q: '¿Cómo agrego empleados a mi restaurante?',
-          a: 'Ve a la sección de Empleados, haz clic en "Agregar Empleado" e ingresa su información. Ellos recibirán un enlace de invitación por correo electrónico.'
+          q: '¿Cómo agregó empleados a mi empresa?',
+          a: 'Ve a Empleados, haz clic en "Nuevo Empleado" e ingresa nombre y email. Cada empleado recibe un código QR único para registrar consumos.'
         },
         {
-          q: '¿Puedo tener múltiples ubicaciones?',
-          a: 'Sí, nuestro plan Professional incluye soporte para múltiples ubicaciones. Cada ubicación puede tener su propio menú y empleados.'
+          q: '¿Qué es el código QR del empleado?',
+          a: 'Es un identificador único que permite validar el consumo del empleado en los restaurantes. Cada empleado puede descargar o imprimir su QR.'
         },
         {
-          q: '¿Cómo funciona la gestión de órdenes?',
-          a: 'Los clientes pueden realizar órdenes a través del sistema. Tu equipo recibe notificaciones en tiempo real y puede rastrear el estado.'
+          q: '¿Puedo tener varios empleados en una empresa?',
+          a: 'Sí, según tu plan. El Básico permite hasta 20 empleados y el Profesional hasta 200. El Empresarial es ilimitado.'
+        }
+      ]
+    },
+    {
+      category: 'Acuerdos y Consumo',
+      questions: [
+        {
+          q: '¿Qué es un acuerdo en MesaPass?',
+          a: 'Un acuerdo es la relación entre tu empresa y un restaurante. Define el tipo de consumo permitido y el período del acuerdo.'
+        },
+        {
+          q: '¿Cómo registro un consumo?',
+          a: 'Los consumos se registran usando el código QR del empleado en un restaurante. El sistema valida automáticamente el acuerdo vigente.'
+        },
+        {
+          q: '¿Puedo tener múltiples acuerdos?',
+          a: 'Sí, puedes crear tantos acuerdos como necesites con diferentes restaurantes. Cada uno gestiona sus períodos y límites independientemente.'
+        }
+      ]
+    },
+    {
+      category: 'Reportes y Facturación',
+      questions: [
+        {
+          q: '¿Qué información muestran los reportes?',
+          a: 'MesaPass proporciona reportes de consumo por empleado, tipo de comida, acuerdo y período. También incluye resúmenes de facturación.'
+        },
+        {
+          q: '¿Cómo accedo a mis reportes?',
+          a: 'Ve a Reportes en tu panel. Puedes generar reportes de consumo y facturación en el rango de fechas que necesites.'
+        },
+        {
+          q: '¿Puedo exportar datos?',
+          a: 'Sí, todos reportes se pueden descargar en formatos PDF o Excel para uso externo o auditoría.'
         }
       ]
     },
@@ -45,32 +79,15 @@ export default function Page() {
       questions: [
         {
           q: '¿Mis datos están seguros?',
-          a: 'Sí, usamos encriptación de nivel empresarial (SSL/TLS) y cumplimos con estándares de seguridad internacionales.'
+          a: 'Sí, MesaPass usa encriptación SSL/TLS y cumple con estándares internacionales de seguridad de datos.'
         },
         {
-          q: '¿Puedo exportar mis datos?',
-          a: 'Claro, puedes descargar todos tus datos en formato CSV o JSON en cualquier momento.'
+          q: '¿Qué pasa si olvido mi contraseña?',
+          a: 'Usa la opción "Olvidé mi contraseña" en el login. Recibirás un enlace para restablecerla en tu correo.'
         },
         {
-          q: '¿Qué sucede si olvido mi contraseña?',
-          a: 'Puedes usar la opción "Olvidé mi contraseña" en la pantalla de inicio de sesión para restablecerla fácilmente.'
-        }
-      ]
-    },
-    {
-      category: 'Facturación',
-      questions: [
-        {
-          q: '¿Cómo funciona la facturación?',
-          a: 'Se te facturará mensualmente en el aniversario de tu suscripción. Recibirás una factura por correo electrónico.'
-        },
-        {
-          q: '¿Puedo cambiar mi plan en cualquier momento?',
-          a: 'Sí, puedes cambiar o cancelar tu plan en cualquier momento desde tu panel de configuración.'
-        },
-        {
-          q: '¿Hay un contrato a largo plazo?',
-          a: 'No, no hay contrato a largo plazo. Puedes cancelar en cualquier momento sin penalización.'
+          q: '¿Cómo cambio mi contraseña?',
+          a: 'Ve a Configuración > Seguridad y usa la sección "Cambiar contraseña". Necesitarás tu contraseña actual para confirmar.'
         }
       ]
     }
@@ -85,19 +102,10 @@ export default function Page() {
       <div className='max-w-full'>
         {/* Header */}
         <div className='text-center mb-12'>
-          <h1 className='text-4xl font-bold text-slate-900 mb-4'>Frequently Asked Questions</h1>
+          <h1 className='text-4xl font-bold text-slate-900 mb-4'>Preguntas Frecuentes</h1>
           <p className='text-xl text-slate-600'>
-            Encuentra respuestas a preguntas comunes sobre Mesapass
+            Resuelve tus dudas sobre MesaPass
           </p>
-        </div>
-
-        {/* Search Box */}
-        <div className='mb-12'>
-          <input
-            type='text'
-            placeholder='Busca una pregunta...'
-            className='w-full px-6 py-3 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm'
-          />
         </div>
 
         {/* FAQ Categories */}
@@ -148,10 +156,10 @@ export default function Page() {
             Nuestro equipo de soporte está aquí para ayudarte
           </p>
           <button className='px-8 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors font-medium'>
-            Contacta al Soporte
+            Contacta a Soporte
           </button>
         </div>
       </div>
     </div>
   )
-}
+}}

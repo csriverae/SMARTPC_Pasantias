@@ -1,51 +1,51 @@
 export default function Page() {
   const plans = [
     {
-      name: 'Starter',
-      price: '$0',
-      period: 'Forever free',
-      description: 'Perfect for getting started',
+      name: 'Básico',
+      price: 'Gratis',
+      period: 'Siempre',
+      description: 'Para comenzar tu gestión de comidas',
       features: [
-        '✅ Up to 5 employees',
-        '✅ Basic restaurant menu',
-        '✅ Order management',
-        '✅ Email support',
-        '❌ Advanced analytics',
-        '❌ API access'
+        '✅ Hasta 20 empleados',
+        '✅ Gestión de acuerdos básica',
+        '✅ Registros de consumo',
+        '✅ Soporte por email',
+        '❌ Reportes avanzados',
+        '❌ Múltiples ubicaciones'
       ],
-      cta: 'Get Started',
+      cta: 'Empezar ahora',
       highlighted: false
     },
     {
-      name: 'Professional',
-      price: '$29',
-      period: 'per month',
-      description: 'Best for growing businesses',
+      name: 'Profesional',
+      price: '$99',
+      period: 'por mes',
+      description: 'Para restaurantes en crecimiento',
       features: [
-        '✅ Unlimited employees',
-        '✅ Advanced menu builder',
-        '✅ Multi-location support',
-        '✅ Priority support',
-        '✅ Advanced analytics',
-        '❌ API access',
+        '✅ Hasta 200 empleados',
+        '✅ Gestión completa de acuerdos',
+        '✅ QR para empleados',
+        '✅ Reportes de consumo',
+        '✅ Soporte prioritario',
+        '✅ Múltiples ubicaciones',
       ],
-      cta: 'Start Free Trial',
+      cta: 'Comenzar prueba gratis',
       highlighted: true
     },
     {
-      name: 'Enterprise',
-      price: 'Custom',
-      period: 'Contact sales',
-      description: 'For large organizations',
+      name: 'Empresarial',
+      price: 'Personalizado',
+      period: 'Contacta ventas',
+      description: 'Para cadenas de restaurantes',
       features: [
-        '✅ Everything in Professional',
-        '✅ Full API access',
-        '✅ Custom integrations',
-        '✅ Dedicated account manager',
-        '✅ 24/7 phone support',
-        '✅ SLA guarantee'
+        '✅ Empleados ilimitados',
+        '✅ Todo de Profesional',
+        '✅ API de integración',
+        '✅ Soporte 24/7',
+        '✅ Capacitación dedicada',
+        '✅ SLA garantizado'
       ],
-      cta: 'Contact Sales',
+      cta: 'Contactar ventas',
       highlighted: false
     }
   ]
@@ -55,23 +55,8 @@ export default function Page() {
       <div className='max-w-full'>
         {/* Header */}
         <div className='text-center mb-12'>
-          <h1 className='text-4xl font-bold text-slate-900 mb-4'>Simple, Transparent Pricing</h1>
-          <p className='text-xl text-slate-600'>Choose the perfect plan for your restaurant business</p>
-        </div>
-
-        {/* Billing Toggle */}
-        <div className='flex justify-center mb-12'>
-          <div className='inline-flex bg-slate-200 rounded-lg p-1'>
-            <button className='px-6 py-2 bg-white text-slate-900 rounded-md font-medium shadow-sm'>
-              Monthly
-            </button>
-            <button className='px-6 py-2 text-slate-700 font-medium'>
-              Yearly
-              <span className='ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full ml-2'>
-                Save 20%
-              </span>
-            </button>
-          </div>
+          <h1 className='text-4xl font-bold text-slate-900 mb-4'>Planes de MesaPass</h1>
+          <p className='text-xl text-slate-600'>Elige el plan perfecto para tu negocio de comidas</p>
         </div>
 
         {/* Pricing Cards */}
@@ -130,26 +115,30 @@ export default function Page() {
           ))}
         </div>
 
-        {/* FAQ Section */}
+        {/* Features Section */}
         <div className='bg-slate-50 rounded-lg p-8 border border-slate-200'>
-          <h2 className='text-2xl font-bold text-slate-900 mb-6'>Frequently Asked Questions</h2>
-          <div className='space-y-4'>
-            <details className='border-b border-slate-200 pb-4'>
-              <summary className='font-medium text-slate-900 cursor-pointer hover:text-indigo-600'>
-                Can I change plans anytime?
-              </summary>
-              <p className='text-slate-600 mt-2'>
-                Yes! You can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle.
-              </p>
-            </details>
-            <details className='border-b border-slate-200 pb-4'>
-              <summary className='font-medium text-slate-900 cursor-pointer hover:text-indigo-600'>
-                Is there a free trial?
-              </summary>
-              <p className='text-slate-600 mt-2'>
-                Yes, all paid plans come with a 14-day free trial. No credit card required.
-              </p>
-            </details>
+          <h2 className='text-2xl font-bold text-slate-900 mb-6'>Características en todos los planes</h2>
+          <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6'>
+            <div className='bg-white rounded-lg p-6 border border-slate-200'>
+              <p className='text-2xl mb-2'>👤</p>
+              <h3 className='font-semibold text-slate-900 mb-2'>Gestión de Empleados</h3>
+              <p className='text-sm text-slate-600'>Administra tu equipo con IDs y códigos QR únicos</p>
+            </div>
+            <div className='bg-white rounded-lg p-6 border border-slate-200'>
+              <p className='text-2xl mb-2'>📋</p>
+              <h3 className='font-semibold text-slate-900 mb-2'>Acuerdos</h3>
+              <p className='text-sm text-slate-600'>Crea y gestiona acuerdos con restaurantes</p>
+            </div>
+            <div className='bg-white rounded-lg p-6 border border-slate-200'>
+              <p className='text-2xl mb-2'>🥘</p>
+              <h3 className='font-semibold text-slate-900 mb-2'>Registros de Consumo</h3>
+              <p className='text-sm text-slate-600'>Válida consumos a través de códigos QR</p>
+            </div>
+            <div className='bg-white rounded-lg p-6 border border-slate-200'>
+              <p className='text-2xl mb-2'>📊</p>
+              <h3 className='font-semibold text-slate-900 mb-2'>Reportes</h3>
+              <p className='text-sm text-slate-600'>Análisis detallados de consumo y facturación</p>
+            </div>
           </div>
         </div>
       </div>

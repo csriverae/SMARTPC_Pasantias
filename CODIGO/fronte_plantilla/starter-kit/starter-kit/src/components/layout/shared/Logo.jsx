@@ -7,7 +7,7 @@ import { useEffect, useRef } from 'react'
 import styled from '@emotion/styled'
 
 // Component Imports
-import VuexyLogo from '@core/svg/Logo'
+import MesaPassLogo from '@core/svg/Logo'
 
 // Config Imports
 import themeConfig from '@configs/themeConfig'
@@ -59,7 +59,7 @@ const Logo = ({ color }) => {
 
   return (
     <div className='flex items-center'>
-      <VuexyLogo className='text-2xl text-primary' />
+      <MesaPassLogo className='text-2xl text-primary' />
       <LogoText
         color={color}
         ref={logoTextRef}

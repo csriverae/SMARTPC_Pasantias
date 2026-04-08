@@ -15,8 +15,8 @@ export default function Page() {
   return (
     <div className='p-6 max-w-full'>
       <div className='mb-8'>
-        <h1 className='text-4xl font-bold text-slate-900 mb-2'>My Profile</h1>
-        <p className='text-slate-500'>Manage your personal information and account settings</p>
+        <h1 className='text-4xl font-bold text-slate-900 mb-2'>Mi Perfil</h1>
+        <p className='text-slate-500'>Gestiona tu información personal y los detalles de tu cuenta</p>
       </div>
 
       {/* Main Profile Card */}
@@ -43,26 +43,26 @@ export default function Page() {
         {/* User Details Grid */}
         <div className='grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-slate-200'>
           <div>
-            <label className='block text-sm font-medium text-slate-700 mb-1'>Full Name</label>
+            <label className='block text-sm font-medium text-slate-700 mb-1'>Nombre completo</label>
             <p className='text-slate-900 font-medium'>{user.full_name}</p>
           </div>
           <div>
-            <label className='block text-sm font-medium text-slate-700 mb-1'>Email Address</label>
+            <label className='block text-sm font-medium text-slate-700 mb-1'>Correo electrónico</label>
             <p className='text-slate-900 font-medium'>{user.email}</p>
           </div>
           <div>
-            <label className='block text-sm font-medium text-slate-700 mb-1'>Role</label>
+            <label className='block text-sm font-medium text-slate-700 mb-1'>Rol</label>
             <p className='text-slate-900 font-medium capitalize'>{user.role}</p>
           </div>
           <div>
-            <label className='block text-sm font-medium text-slate-700 mb-1'>Tenant</label>
+            <label className='block text-sm font-medium text-slate-700 mb-1'>Empresa</label>
             <p className='text-slate-900 font-medium'>{user.tenant_name || 'N/A'}</p>
           </div>
           <div>
-            <label className='block text-sm font-medium text-slate-700 mb-1'>Status</label>
+            <label className='block text-sm font-medium text-slate-700 mb-1'>Estado</label>
             <div className='flex items-center gap-2'>
               <span className='w-3 h-3 bg-green-500 rounded-full'></span>
-              <span className='text-slate-900 font-medium'>Active</span>
+              <span className='text-slate-900 font-medium'>Activo</span>
             </div>
           </div>
         </div>

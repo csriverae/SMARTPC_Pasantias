@@ -32,16 +32,16 @@ export default function DashboardLayout({ children }) {
   }
 
   const menuItems = [
-    { title: 'Home', href: '/home', icon: '🏠' },
-    { title: 'About', href: '/about', icon: 'ℹ️' },
-    { title: 'Profile', href: '/profile', icon: '👤' },
-    { title: 'Settings', href: '/settings', icon: '⚙️' },
-    { title: 'Tenants', href: '/tenants', icon: '🏢' },
-    { title: 'Users', href: '/users', icon: '👥', roles: ['admin'] },
-    { title: 'Employees', href: '/employees', icon: '👨‍💼' },
-    { title: 'Agreements', href: '/agreements', icon: '📋' },
-    { title: 'Meal Logs', href: '/meal-logs', icon: '🥘' },
-    { title: 'Reports', href: '/reports', icon: '📊' },
+    { title: 'Inicio', href: '/home', icon: '🏠' },
+    { title: 'Perfil', href: '/profile', icon: '👤' },
+    { title: 'Configuración', href: '/settings', icon: '⚙️' },
+    { title: 'Empresas', href: '/tenants', icon: '🏢' },
+    { title: 'Usuarios', href: '/users', icon: '👥', roles: ['admin'] },
+    { title: 'Empleados', href: '/employees', icon: '👨‍💼' },
+    { title: 'Acuerdos', href: '/agreements', icon: '📋' },
+    { title: 'Consumos', href: '/meal-logs', icon: '🥘' },
+    { title: 'Reportes', href: '/reports', icon: '📊' },
+    { title: 'Ayuda', href: '/faq', icon: '❓' },
   ]
 
   const filteredMenuItems = user
@@ -105,10 +105,10 @@ export default function DashboardLayout({ children }) {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors font-medium ${
               !isOpen ? 'justify-center' : ''
             }`}
-            title={!isOpen ? 'Exit dashboard' : ''}
+            title={!isOpen ? 'Salir' : ''}
           >
             <span className='text-xl flex-shrink-0'>🚪</span>
-            {isOpen && <span>Exit Dashboard</span>}
+            {isOpen && <span>Salir</span>}
           </button>
         </div>
       </aside>

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import api from '@/utils/api'
 import { useAuthUser } from '@core/hooks/useAuthUser'
 import { LoadingSpinner } from '@components/dashboard/Loaders'
 import { ErrorMessage } from '@components/dashboard/ErrorMessage'
@@ -43,31 +44,21 @@ export default function Page() {
 
     try {
       setPasswordLoading(true)
-      const token = localStorage.getItem('token')
-      
-      const response = await fetch('http://localhost:8000/auth/change-password', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          current_password: passwordForm.currentPassword,
-          new_password: passwordForm.newPassword,
-          confirm_password: passwordForm.confirmPassword,
-        }),
+      const response = await api.post('/auth/change-password', {
+        current_password: passwordForm.currentPassword,
+        new_password: passwordForm.newPassword,
+        confirm_password: passwordForm.confirmPassword,
       })
 
-      if (!response.ok) {
-        const data = await response.json()
-        throw new Error(data.detail || 'Failed to change password')
+      if (response.status !== 200 && response.status !== 201) {
+        throw new Error(response.data?.detail || 'Error al cambiar la contraseña')
       }
 
       setPasswordSuccess(true)
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       setTimeout(() => setPasswordSuccess(false), 5000)
     } catch (err) {
-      setPasswordError(err instanceof Error ? err.message : 'An error occurred')
+      setPasswordError(err instanceof Error ? err.message : 'Ocurrió un error')
     } finally {
       setPasswordLoading(false)
     }
@@ -80,8 +71,8 @@ export default function Page() {
   return (
     <div className='p-6 max-w-full'>
       <div className='mb-8'>
-        <h1 className='text-4xl font-bold text-slate-900 mb-2'>Settings</h1>
-        <p className='text-slate-500'>Manage your account settings and preferences</p>
+        <h1 className='text-4xl font-bold text-slate-900 mb-2'>Configuración</h1>
+        <p className='text-slate-500'>Gestiona la seguridad y los ajustes de tu cuenta de MesaPass</p>
       </div>
 
       {/* Tabs Navigation */}
@@ -267,7 +258,7 @@ export default function Page() {
       {activeTab === 'preferences' && (
         <div className='space-y-6'>
           <div className='bg-white rounded-lg shadow-md p-6'>
-            <h2 className='text-2xl font-bold text-slate-900 mb-6'>Preferences</h2>
+            <h2 className='text-2xl font-bold text-slate-900 mb-6'>Preferencias</h2>
             
             <div className='space-y-6'>
               {/* Theme Preferences */}

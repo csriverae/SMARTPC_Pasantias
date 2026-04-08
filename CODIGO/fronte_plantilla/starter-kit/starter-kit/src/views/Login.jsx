@@ -6,6 +6,9 @@ import { useState } from 'react'
 // Next Imports
 import { useRouter } from 'next/navigation'
 
+// Utils
+import api from '@/utils/api'
+
 // MUI Imports
 import useMediaQuery from '@mui/material/useMediaQuery'
 import { styled, useTheme } from '@mui/material/styles'
@@ -24,9 +27,6 @@ import classnames from 'classnames'
 import Link from '@components/Link'
 import Logo from '@components/layout/shared/Logo'
 import CustomTextField from '@core/components/mui/TextField'
-
-// Config Imports
-import themeConfig from '@configs/themeConfig'
 
 // Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
@@ -66,6 +66,9 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
   const [lastName, setLastName] = useState('')
   const [tenantName, setTenantName] = useState('')
   const [loading, setLoading] = useState(false)
+  const [tenants, setTenants] = useState([])
+  const [showTenantSelector, setShowTenantSelector] = useState(false)
+  const [selectedTenant, setSelectedTenant] = useState(null)
 
   // Vars
   const darkImg = '/images/pages/auth-mask-dark.png'
@@ -91,6 +94,62 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
   )
 
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+
+  const completeLogin = async (authData, backendUser, tenantData) => {
+    const normalizedUser = {
+      ...backendUser,
+      role: tenantData.role || backendUser.tenant_role || backendUser.role,
+      tenant_name: tenantData.tenant_name,
+      tenant_id: tenantData.tenant_id
+    }
+
+    localStorage.setItem('token', authData.access_token)
+    if (authData.refresh_token) {
+      localStorage.setItem('refresh_token', authData.refresh_token)
+    }
+    localStorage.setItem('tenant_id', tenantData.tenant_id)
+    localStorage.setItem('user', JSON.stringify(normalizedUser))
+
+    try {
+      const meResponse = await api.get('/auth/me')
+      const parsedUser = meResponse.data?.data?.data || meResponse.data?.data || meResponse.data
+      const normalizedMeUser = {
+        ...parsedUser,
+        role: parsedUser.role || parsedUser.tenant_role || normalizedUser.role,
+        tenant_name: tenantData.tenant_name,
+        tenant_id: tenantData.tenant_id
+      }
+      localStorage.setItem('user', JSON.stringify(normalizedMeUser))
+    } catch (err) {
+      console.warn('No se pudo obtener el usuario después del login:', err)
+    }
+
+    router.push('/home')
+  }
+
+  const handleTenantSelect = async (tenant) => {
+    const tempToken = localStorage.getItem('temp_token')
+    const tempRefreshToken = localStorage.getItem('temp_refresh_token')
+    const tempUser = localStorage.getItem('temp_user')
+
+    if (!tempToken || !tempUser) {
+      alert('Error: No se encontraron datos temporales de autenticación')
+      return
+    }
+
+    const authData = {
+      access_token: tempToken,
+      refresh_token: tempRefreshToken
+    }
+
+    const backendUser = JSON.parse(tempUser)
+    await completeLogin(authData, backendUser, tenant)
+
+    // Limpiar datos temporales
+    localStorage.removeItem('temp_token')
+    localStorage.removeItem('temp_refresh_token')
+    localStorage.removeItem('temp_user')
+  }
 
   return (
     <div className='flex bs-full justify-center'>
@@ -127,79 +186,48 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
               e.preventDefault()
               setLoading(true)
 
-              const apiUrl = isRegister ? 'http://localhost:8000/auth/register' : 'http://localhost:8000/auth/login'
-
+                  const endpoint = isRegister ? '/auth/register' : '/auth/login'
               const body = isRegister
-                ? JSON.stringify({
+                ? {
                     email,
                     password,
                     full_name: `${firstName} ${lastName}`.trim(),
                     tenant_name: tenantName
-                  })
-                : JSON.stringify({ email, password })
+                  }
+                : { email, password }
 
               try {
-                const response = await fetch(apiUrl, {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body,
-                })
+                const response = await api.post(endpoint, body)
+                const data = response.data
+                const authData = data?.data?.data || data?.data || data
 
-                if (response.ok) {
-                  const data = await response.json()
-                  const authData = data?.data?.data || {}
-
-                  if (!authData.access_token) {
-                    throw new Error('No se recibió access_token del servidor')
-                  }
-
-                  const backendUser = authData.user || {}
-                  const normalizedUser = {
-                    ...backendUser,
-                    role: backendUser.role || backendUser.tenant_role || backendUser.role
-                  }
-
-                  localStorage.setItem('token', authData.access_token)
-
-                  if (authData.refresh_token) {
-                    localStorage.setItem('refresh_token', authData.refresh_token)
-                  }
-
-                  localStorage.setItem('tenant_id', authData.tenant_id)
-                  localStorage.setItem('user', JSON.stringify(normalizedUser))
-
-                  try {
-                    const meResponse = await fetch('http://localhost:8000/auth/me', {
-                      headers: {
-                        Authorization: `Bearer ${authData.access_token}`,
-                        'X-Tenant-ID': authData.tenant_id,
-                        'Content-Type': 'application/json'
-                      }
-                    })
-
-                    if (meResponse.ok) {
-                      const currentUser = await meResponse.json()
-                      const parsedUser = currentUser?.data?.data || currentUser
-                      const normalizedMeUser = {
-                        ...parsedUser,
-                        role: parsedUser.role || parsedUser.tenant_role || normalizedUser.role
-                      }
-                      localStorage.setItem('user', JSON.stringify(normalizedMeUser))
-                    }
-                  } catch (err) {
-                    console.warn('No se pudo obtener el usuario después del login/registro:', err)
-                  }
-
-                  router.push('/home')
-                } else {
-                  const errorData = await response.json()
-                  alert(errorData.detail || errorData.message || (isRegister ? 'Registro fallido' : 'Login fallido'))
+                if (!authData.access_token) {
+                  throw new Error('No se recibió access_token del servidor')
                 }
+
+                const backendUser = authData.user || authData
+                const userTenants = backendUser.tenants || []
+
+                if (userTenants.length > 1) {
+                  setTenants(userTenants)
+                  setShowTenantSelector(true)
+                  localStorage.setItem('temp_token', authData.access_token)
+                  localStorage.setItem('temp_refresh_token', authData.refresh_token || '')
+                  localStorage.setItem('temp_user', JSON.stringify(backendUser))
+                  setLoading(false)
+                  return
+                }
+
+                const selectedTenantData = userTenants.length === 1 ? userTenants[0] : {
+                  tenant_id: authData.tenant_id,
+                  tenant_name: authData.tenant_name || backendUser.tenant_name || tenantName,
+                  role: backendUser.tenant_role || backendUser.role
+                }
+
+                await completeLogin(authData, backendUser, selectedTenantData)
               } catch (error) {
                 console.error(isRegister ? 'Register error:' : 'Login error:', error)
-                alert((isRegister ? 'Registro error:' : 'Login error:') + ' ' + error.message)
+                alert((isRegister ? 'Registro error:' : 'Login error:') + ' ' + (error.message || 'Error en la autenticación'))
               } finally {
                 setLoading(false)
               }
@@ -285,6 +313,9 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
                   setFirstName('')
                   setLastName('')
                   setTenantName('')
+                  setTenants([])
+                  setShowTenantSelector(false)
+                  setSelectedTenant(null)
                 }}
               >
                 {isRegister ? 'Ir al login' : 'Crear una cuenta'}
@@ -308,6 +339,43 @@ const LoginV2 = ({ mode, initialRegister = false }) => {
           </form>
         </div>
       </div>
+
+      {/* Tenant Selector Modal */}
+      {showTenantSelector && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
+          <div className='bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4'>
+            <div className='flex justify-between items-center mb-4'>
+              <h3 className='text-lg font-semibold'>Seleccionar Empresa</h3>
+              <button
+                onClick={() => {
+                  setShowTenantSelector(false)
+                  setTenants([])
+                  localStorage.removeItem('temp_token')
+                  localStorage.removeItem('temp_refresh_token')
+                  localStorage.removeItem('temp_user')
+                }}
+                className='text-gray-500 hover:text-gray-700 text-xl'
+              >
+                ×
+              </button>
+            </div>
+            <p className='text-gray-600 mb-4'>Selecciona la empresa con la que quieres trabajar:</p>
+            <div className='space-y-3'>
+              {tenants.map((tenant) => (
+                <button
+                  key={tenant.tenant_id}
+                  onClick={() => handleTenantSelect(tenant)}
+                  className='w-full p-3 border rounded-lg hover:bg-indigo-50 hover:border-indigo-300 transition-colors text-left'
+                >
+                  <div className='font-medium text-gray-900'>{tenant.tenant_name}</div>
+                  <div className='text-sm text-gray-500 capitalize'>Rol: {tenant.role}</div>
+                  <div className='text-xs text-gray-400'>Tipo: {tenant.tenant_type}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

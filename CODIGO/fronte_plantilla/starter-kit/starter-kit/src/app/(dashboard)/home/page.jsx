@@ -14,36 +14,41 @@ export default function Page() {
   const [employees, setEmployees] = useState([])
   const [mealLogs, setMealLogs] = useState([])
   const [agreements, setAgreements] = useState([])
+  const [billingSummary, setBillingSummary] = useState({ total_billing: 0, agreements_count: 0 })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [companiesRes, employeesRes, mealLogsRes, agreementsRes] = await Promise.all([
+        const [companiesRes, employeesRes, mealLogsRes, agreementsRes, billingRes] = await Promise.all([
           api.get('/api/companies'),
           api.get('/api/employees'),
           api.get('/api/meal-logs'),
-          api.get('/api/agreements')
+          api.get('/api/agreements'),
+          api.get('/api/reports/billing')
         ])
 
         const companiesData = companiesRes.data.data || []
         const employeesData = employeesRes.data.data || []
         const mealLogsData = mealLogsRes.data.data || []
         const agreementsData = agreementsRes.data.data || []
+        const billingData = billingRes.data.data || {}
 
         setCompanies(companiesData)
         setEmployees(employeesData)
         setMealLogs(mealLogsData)
         setAgreements(agreementsData)
+        setBillingSummary(billingData.summary || { total_billing: 0, agreements_count: 0 })
 
-        // Calculate total consumption amount
         const totalConsumption = mealLogsData.reduce((sum, log) => sum + (log.total_amount || 0), 0)
+        const totalBilling = billingData.summary?.total_billing || 0
+        const agreementsCount = billingData.summary?.agreements_count || agreementsData.length
 
         setStats([
           { label: 'Empresas', value: companiesData.length.toString(), icon: 'tabler-building', change: 'Total registrado' },
           { label: 'Empleados', value: employeesData.length.toString(), icon: 'tabler-users', change: 'Total registrado' },
-          { label: 'Consumos', value: mealLogsData.length.toString(), icon: 'tabler-shopping-cart', change: `$${totalConsumption.toFixed(2)} total` },
-          { label: 'Acuerdos', value: agreementsData.length.toString(), icon: 'tabler-file-text', change: 'Activos' }
+          { label: 'Facturación', value: `$${totalBilling.toFixed(2)}`, icon: 'tabler-cash', change: `${agreementsCount} acuerdos` },
+          { label: 'Acuerdos', value: agreementsCount.toString(), icon: 'tabler-file-text', change: 'Activos' }
         ])
       } catch (error) {
         console.error('Error loading data:', error)

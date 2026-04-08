@@ -6,6 +6,9 @@ import { useEffect, useRef, useState } from 'react'
 // Next Imports
 import { useRouter } from 'next/navigation'
 
+// API
+import api from '@/utils/api'
+
 // MUI Imports
 import { styled } from '@mui/material/styles'
 import Badge from '@mui/material/Badge'
@@ -39,7 +42,7 @@ const UserDropdown = () => {
 
   const [user, setUser] = useState({
     full_name: 'John Doe',
-    email: 'admin@vuexy.com',
+    email: 'admin@mesapass.com',
     avatar: '/images/avatars/1.png'
   })
 
@@ -79,26 +82,16 @@ const UserDropdown = () => {
       if (!token || !tenant) return
 
       try {
-        const response = await fetch('http://localhost:8000/auth/me', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'X-Tenant-ID': tenant,
-            'Content-Type': 'application/json'
-          }
+        const response = await api.get('/auth/me')
+        const data = response.data?.data?.data || response.data?.data || response.data
+
+        setUser({
+          full_name: data.full_name || data.email || 'John Doe',
+          email: data.email || 'admin@mesapass.com',
+          avatar: data.avatar || '/images/avatars/1.png',
+          role: data.role || data.tenant_role
         })
-
-        if (response.ok) {
-          const result = await response.json()
-          const data = result?.data?.data || result
-
-          setUser({
-            full_name: data.full_name || data.email || 'John Doe',
-            email: data.email || 'admin@vuexy.com',
-            avatar: data.avatar || '/images/avatars/1.png',
-            role: data.role || data.tenant_role
-          })
-          localStorage.setItem('user', JSON.stringify(data))
-        }
+        localStorage.setItem('user', JSON.stringify(data))
       } catch (error) {
         console.error('User fetch error:', error)
       }
@@ -179,19 +172,19 @@ const UserDropdown = () => {
                   <Divider className='mlb-1' />
                   <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/profile')}>
                     <i className='tabler-user' />
-                    <Typography color='text.primary'>My Profile</Typography>
+                    <Typography color='text.primary'>Mi Perfil</Typography>
                   </MenuItem>
                   <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/settings')}>
                     <i className='tabler-settings' />
-                    <Typography color='text.primary'>Settings</Typography>
+                    <Typography color='text.primary'>Configuración</Typography>
                   </MenuItem>
                   <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/pricing')}>
                     <i className='tabler-currency-dollar' />
-                    <Typography color='text.primary'>Pricing</Typography>
+                    <Typography color='text.primary'>Planes</Typography>
                   </MenuItem>
                   <MenuItem className='mli-2 gap-3' onClick={e => handleDropdownClose(e, '/faq')}>
                     <i className='tabler-help-circle' />
-                    <Typography color='text.primary'>FAQ</Typography>
+                    <Typography color='text.primary'>Ayuda</Typography>
                   </MenuItem>
                   <div className='flex items-center plb-2 pli-3'>
                     <Button
@@ -203,7 +196,7 @@ const UserDropdown = () => {
                       onClick={handleUserLogout}
                       sx={{ '& .MuiButton-endIcon': { marginInlineStart: 1.5 } }}
                     >
-                      Logout
+                      Cerrar sesión
                     </Button>
                   </div>
                 </MenuList>

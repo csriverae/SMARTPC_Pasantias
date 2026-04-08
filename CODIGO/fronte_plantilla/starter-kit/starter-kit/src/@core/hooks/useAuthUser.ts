@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import api from '@/utils/api'
 
 export interface AuthUser {
   id?: string
@@ -54,22 +55,8 @@ export const useAuthUser = (): UseAuthUserReturn => {
         return
       }
 
-      const tenant = localStorage.getItem('tenant_id')
-      const response = await fetch('http://localhost:8000/auth/me', {
-        method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'X-Tenant-ID': tenant || '',
-          'Content-Type': 'application/json'
-        }
-      })
-
-      if (!response.ok) {
-        throw new Error(`Error: ${response.status} ${response.statusText}`)
-      }
-
-      const json = await response.json()
-      const userData = json?.data?.data || json
+      const response = await api.get('/auth/me')
+      const userData = response.data?.data?.data || response.data?.data || response.data
       const role = userData.role || userData.tenant_role
       if (role) {
         userData.role = role
