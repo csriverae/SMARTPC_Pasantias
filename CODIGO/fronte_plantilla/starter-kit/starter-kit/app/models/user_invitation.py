@@ -18,6 +18,7 @@ class UserInvitation(Base):
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, nullable=False, index=True)
     code = Column(String, unique=True, nullable=False, index=True)
+    generated_password = Column(String, nullable=True)  # Contraseña generada para el usuario
     role = Column(String, nullable=False, default="employee")
     tenant_id = Column(UUID(as_uuid=True), ForeignKey("tenants.id"), nullable=False)
     invited_by = Column(Integer, ForeignKey("users.id"), nullable=False)

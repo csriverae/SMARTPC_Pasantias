@@ -5,10 +5,11 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 import traceback
 from app.db.session import SessionLocal
-from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, PasswordChangeRequest
+from app.schemas.user import UserCreate, UserResponse, UserLogin, Token, PasswordChangeRequest, PasswordResetRequest, PasswordResetConfirm
 from app.schemas.response import SuccessResponse, ErrorResponse
 from app.crud.user import create_user, get_users, authenticate_user, get_user_by_email, delete_user, update_user_password
 from app.crud.tenant import get_user_tenants, get_tenant_by_id
+from app.crud.password_reset import create_password_reset, get_password_reset_by_code, mark_reset_code_used
 from app.core.security import (
     create_access_token,
     create_refresh_token,
@@ -471,3 +472,135 @@ def select_tenant():
             "data": {"data": []}
         }
     )
+
+
+@router.post("/forgot-password")
+def forgot_password(request: PasswordResetRequest, db: Session = Depends(get_db)):
+    try:
+        # Check if user exists
+        user = get_user_by_email(db, request.email)
+        if not user:
+            # Don't reveal if email exists or not for security
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": "Si el email existe en nuestros registros, recibirás un código de recuperación",
+                    "status": 200,
+                    "error": False,
+                    "data": {"data": []}
+                }
+            )
+
+        # Create password reset
+        password_reset = create_password_reset(db, request.email)
+
+        # In a real application, you would send an email here
+        # For now, we'll return the code in the response (for testing purposes)
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Código de recuperación enviado al email",
+                "status": 200,
+                "error": False,
+                "data": {
+                    "data": [{
+                        "reset_code": password_reset.reset_code,  # Remove this in production
+                        "expires_at": password_reset.expires_at.isoformat()
+                    }]
+                }
+            }
+        )
+    except Exception as e:
+        print(f"Forgot password error: {e}")
+        print(traceback.format_exc())
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al procesar la solicitud de recuperación",
+                "status": 500,
+                "error": True,
+                "data": {"data": [], "error": str(e)}
+            }
+        )
+
+
+@router.post("/reset-password")
+def reset_password(request: PasswordResetConfirm, db: Session = Depends(get_db)):
+    try:
+        # Validate passwords match
+        if request.new_password != request.confirm_password:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "message": "Las nuevas contraseñas no coinciden",
+                    "status": 400,
+                    "error": True,
+                    "data": {"data": []}
+                }
+            )
+
+        # Get password reset record
+        password_reset = get_password_reset_by_code(db, request.reset_code)
+        if not password_reset:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "message": "Código de recuperación inválido o expirado",
+                    "status": 400,
+                    "error": True,
+                    "data": {"data": []}
+                }
+            )
+
+        # Check if email matches
+        if password_reset.email != request.email:
+            return JSONResponse(
+                status_code=400,
+                content={
+                    "message": "El email no coincide con el código de recuperación",
+                    "status": 400,
+                    "error": True,
+                    "data": {"data": []}
+                }
+            )
+
+        # Get user
+        user = get_user_by_email(db, request.email)
+        if not user:
+            return JSONResponse(
+                status_code=404,
+                content={
+                    "message": "Usuario no encontrado",
+                    "status": 404,
+                    "error": True,
+                    "data": {"data": []}
+                }
+            )
+
+        # Update password
+        update_user_password(db, user, request.new_password)
+
+        # Mark reset code as used
+        mark_reset_code_used(db, request.reset_code)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Contraseña restablecida exitosamente",
+                "status": 200,
+                "error": False,
+                "data": {"data": []}
+            }
+        )
+    except Exception as e:
+        print(f"Reset password error: {e}")
+        print(traceback.format_exc())
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": "Error al restablecer contraseña",
+                "status": 500,
+                "error": True,
+                "data": {"data": [], "error": str(e)}
+            }
+        )

@@ -4,9 +4,17 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from pydantic import BaseModel
 from app.db.session import SessionLocal
-from app.schemas.user import UserLogin
+from app.schemas.user import UserLogin, PasswordResetRequest, PasswordResetConfirm
 from app.services.auth_service import AuthService
 from app.core.security import generate_unique_token, get_current_user
+from app.crud.password_reset import (
+    create_password_reset,
+    get_password_reset_by_code,
+    mark_password_reset_used
+)
+from app.crud.user import get_user_by_email, update_user_password
+import secrets
+from datetime import datetime, timedelta
 
 
 router = APIRouter()

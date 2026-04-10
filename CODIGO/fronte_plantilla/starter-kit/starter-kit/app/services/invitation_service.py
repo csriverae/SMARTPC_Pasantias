@@ -43,10 +43,14 @@ class InvitationService:
         code = secrets.token_urlsafe(32)
         expires_at = datetime.now(timezone.utc) + timedelta(days=expires_days)
 
+        # Generate a temporary password for the user
+        temp_password = secrets.token_urlsafe(12)  # 16 characters
+
         # Create invitation
         invitation = UserInvitation(
             email=email,
             code=code,
+            generated_password=temp_password,  # Store the generated password
             role=role,
             tenant_id=str(tenant_id),
             invited_by=invited_by,
@@ -62,13 +66,14 @@ class InvitationService:
             "invitation_id": invitation.id,
             "code": code,
             "email": email,
+            "generated_password": temp_password,  # Include in response for admin
             "role": role,
             "expires_at": expires_at.isoformat(),
             "tenant_id": str(tenant_id)
         }
 
     @staticmethod
-    def accept_invitation(db: Session, code: str, password: str, full_name: str):
+    def accept_invitation(db: Session, code: str, password: str = None, full_name: str = None):
         """Accept user invitation"""
         # Find invitation
         invitation = db.query(UserInvitation).filter(
@@ -100,12 +105,16 @@ class InvitationService:
                 detail="El usuario ya existe"
             )
 
+        # Use generated password if no password provided
+        final_password = password if password else invitation.generated_password
+        final_full_name = full_name if full_name else invitation.email.split('@')[0]  # Default to email prefix
+
         # Create user
         new_user = UserService.create_user(
             db=db,
             email=invitation.email,
-            password=password,
-            full_name=full_name,
+            password=final_password,
+            full_name=final_full_name,
             tenant_id=invitation.tenant_id,
             role=invitation.role
         )
@@ -122,9 +131,10 @@ class InvitationService:
             "email": new_user.email,
             "full_name": new_user.full_name,
             "role": new_user.role.value,
-            "tenant_id": str(tenant.id),
-            "tenant_name": tenant.name,
-            "invitation_accepted": True
+            "tenant_id": str(tenant.id) if tenant else None,
+            "tenant_name": tenant.name if tenant else None,
+            "invitation_accepted": True,
+            "generated_password_used": password is None
         }
 
     @staticmethod

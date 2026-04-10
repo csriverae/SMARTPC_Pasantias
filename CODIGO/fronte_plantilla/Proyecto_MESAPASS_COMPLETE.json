@@ -1,24 +1,106 @@
 {
   "info": {
     "name": "Proyecto_MESAPASS_COMPLETE",
-    "description": "Colección Postman completa para pruebas del backend FastAPI SaaS de MesaPass.",
+    "description": "Colección Postman completa para pruebas del backend FastAPI SaaS de MesaPass. Token Duration: 30 minutes | Refresh Token: 7 days",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "tenant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "user_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "company_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "restaurant_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "employee_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "qr_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "agreement_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "invitation_code",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "reset_code",
+      "value": "",
+      "type": "string"
+    }
+  ],
   "item": [
     {
-      "name": "Auth",
+      "name": "INFORMACIÓN IMPORTANTE",
       "item": [
         {
-          "name": "Register",
+          "name": "📋 Duración de Tokens",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/docs",
+              "host": ["{{base_url}}"],
+              "path": ["docs"]
+            },
+            "description": "⏱️ ACCESS TOKEN: 30 minutos\n⏱️ REFRESH TOKEN: 7 días\n⏱️ PASSWORD RESET CODE: 15 minutos\n⏱️ INVITATION CODE: Sin expiración (única vez)\n\nRUC: Exactamente 13 dígitos, no puede estar registrado\nPASSWORD: Mínimo 6 caracteres\nINVITATION: La contraseña se genera automáticamente (16 caracteres)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Autenticación",
+      "item": [
+        {
+          "name": "Register - Admin (Email, Contraseña, Empresa)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "url": { "raw": "{{base_url}}/auth/register", "host": ["{{base_url}}"], "path": ["auth", "register"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"123456\",\n  \"tenant_name\": \"Empresa Test\"\n}"
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"Admin123\",\n  \"tenant_name\": \"MesaPass Corp\",\n  \"full_name\": \"Admin User\",\n  \"phone\": \"+593987654321\",\n  \"address\": \"Calle Principal 123, Quito\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
             }
           },
           "event": [
@@ -27,15 +109,19 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Register status is 200 or 201', function () {",
+                  "pm.test('Register status is 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "  pm.environment.set('token', data.data.data.access_token);",
                   "  pm.environment.set('tenant_id', data.data.data.tenant_id);",
                   "}",
-                  "pm.test('Register returned access_token', function () {",
+                  "pm.test('Debe retornar access_token', function () {",
                   "  pm.expect(data.data.data.access_token).to.be.a('string');",
+                  "});",
+                  "pm.test('Debe incluir phone y address', function () {",
+                  "  pm.expect(data.data.data.phone).to.exist;",
+                  "  pm.expect(data.data.data.address).to.exist;",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -44,16 +130,23 @@
           ]
         },
         {
-          "name": "Login",
+          "name": "Login - Admin (Por Email y Rol)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "url": { "raw": "{{base_url}}/auth/login", "host": ["{{base_url}}"], "path": ["auth", "login"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@test.com\",\n  \"password\": \"123456\"\n}"
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"Admin123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
             }
           },
           "event": [
@@ -62,15 +155,18 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Login status is 200 or 201', function () {",
+                  "pm.test('Login status es 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "  pm.environment.set('token', data.data.data.access_token);",
                   "  pm.environment.set('tenant_id', data.data.data.tenant_id);",
                   "}",
-                  "pm.test('Login returned access_token', function () {",
+                  "pm.test('Retorna access_token', function () {",
                   "  pm.expect(data.data.data.access_token).to.be.a('string');",
+                  "});",
+                  "pm.test('Retorna role del usuario', function () {",
+                  "  pm.expect(data.data.data.role).to.be.a('string');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -79,14 +175,100 @@
           ]
         },
         {
-          "name": "Get Current User",
+          "name": "Olvidé Contraseña (Enviar Código por Email)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "forgot-password"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Forgot Password status es 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Retorna mensaje de éxito', function () {",
+                  "  pm.expect(data.data.message).to.include('código');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reestablecer Contraseña (Con Código Temporal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"reset_code\": \"123456\",\n  \"new_password\": \"NuevaContraseña123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "reset-password"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Reset Password status es 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Mensaje de éxito', function () {",
+                  "  pm.expect(data.data.message).to.include('exitosamente');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Obtener Usuario Actual",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/auth/me", "host": ["{{base_url}}"], "path": ["auth", "me"] }
+            "url": {
+              "raw": "{{base_url}}/auth/me",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "me"]
+            }
           },
           "event": [
             {
@@ -94,14 +276,14 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Get Current User status is 200', function () {",
+                  "pm.test('Status es 200', function () {",
                   "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
-                  "if (pm.response.code === 200) {",
-                  "  pm.environment.set('user_id', data.data.data.user_id);",
-                  "}",
-                  "pm.test('Current user email is present', function () {",
+                  "pm.test('Retorna datos del usuario', function () {",
                   "  pm.expect(data.data.data.email).to.be.a('string');",
+                  "  pm.expect(data.data.data.role).to.be.a('string');",
+                  "  pm.expect(data.data.data.phone).to.exist;",
+                  "  pm.expect(data.data.data.address).to.exist;",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -112,32 +294,55 @@
       ]
     },
     {
-      "name": "Users",
+      "name": "2. Usuarios e Invitaciones",
       "item": [
         {
-          "name": "Get Users",
+          "name": "Listar Usuarios",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/users", "host": ["{{base_url}}"], "path": ["api", "users"] }
+            "url": {
+              "raw": "{{base_url}}/api/users",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users"]
+            }
           }
         },
         {
-          "name": "Invite User",
+          "name": "Invitar Usuario (Auto-genera Contraseña)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/users/invite", "host": ["{{base_url}}"], "path": ["api", "users", "invite"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"invitado@test.com\",\n  \"role\": \"user\"\n}"
+              "raw": "{\n  \"email\": \"empleado@mesapass.com\",\n  \"role\": \"employee\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/invite",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "invite"]
             }
           },
           "event": [
@@ -146,16 +351,18 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Invite User status is 201', function () {",
+                  "pm.test('Invite User status es 201', function () {",
                   "  pm.expect(pm.response.code).to.equal(201);",
                   "});",
                   "if (pm.response.code === 201) {",
-                  "  if (data.data && data.data.data && data.data.data.code) {",
-                  "    pm.environment.set('invitation_code', data.data.data.code);",
-                  "  }",
+                  "  pm.environment.set('invitation_code', data.data.data.code);",
                   "}",
-                  "pm.test('Invitation code exists', function () {",
+                  "pm.test('Retorna código de invitación', function () {",
                   "  pm.expect(data.data.data.code).to.be.a('string');",
+                  "});",
+                  "pm.test('Incluye contraseña auto-generada', function () {",
+                  "  pm.expect(data.data.data.generated_password).to.be.a('string');",
+                  "  pm.expect(data.data.data.generated_password.length).to.equal(16);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -164,16 +371,23 @@
           ]
         },
         {
-          "name": "Accept Invitation",
+          "name": "Aceptar Invitación (Usar Contraseña Auto-generada)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/invitations/accept", "host": ["{{base_url}}"], "path": ["api", "invitations", "accept"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"code\": \"{{invitation_code}}\",\n  \"password\": \"Invitado123\",\n  \"full_name\": \"Usuario Invitado\"\n}"
+              "raw": "{\n  \"code\": \"{{invitation_code}}\",\n  \"full_name\": \"Empleado Test\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/invitations/accept",
+              "host": ["{{base_url}}"],
+              "path": ["api", "invitations", "accept"]
             }
           },
           "event": [
@@ -182,16 +396,11 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Accept Invitation status is 200', function () {",
+                  "pm.test('Accept Invitation status es 200', function () {",
                   "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
-                  "if (pm.response.code === 200) {",
-                  "  if (data.data && data.data.data && data.data.data.user_id) {",
-                  "    pm.environment.set('invited_user_id', data.data.data.user_id);",
-                  "  }",
-                  "}",
-                  "pm.test('Invitation accepted successfully', function () {",
-                  "  pm.expect(data.data.data).to.exist;",
+                  "pm.test('Usuario creado exitosamente', function () {",
+                  "  pm.expect(data.data.data.user_id).to.exist;",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -200,50 +409,65 @@
           ]
         },
         {
-          "name": "Update User Role",
+          "name": "Actualizar Rol del Usuario",
           "request": {
             "method": "PATCH",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/users/{{user_id}}/role", "host": ["{{base_url}}"], "path": ["api", "users", "{{user_id}}", "role"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"role\": \"admin\"\n}"
+              "raw": "{\n  \"role\": \"company_admin\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/users/{{user_id}}/role",
+              "host": ["{{base_url}}"],
+              "path": ["api", "users", "{{user_id}}", "role"]
             }
-          }
-        },
-        {
-          "name": "Delete User",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/users/{{user_id}}", "host": ["{{base_url}}"], "path": ["api", "users", "{{user_id}}"] }
           }
         }
       ]
     },
     {
-      "name": "Entities",
+      "name": "3. Empresas (RUC Validation)",
       "item": [
         {
-          "name": "Create Company",
+          "name": "Crear Empresa (Validación RUC Válido)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/companies", "host": ["{{base_url}}"], "path": ["api", "companies"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Empresa Test\",\n  \"ruc\": \"12345678901\"\n}"
+              "raw": "{\n  \"name\": \"Empresa MesaPass\",\n  \"ruc\": \"1234567890123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/companies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "companies"]
             }
           },
           "event": [
@@ -252,14 +476,15 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Create Company status is 201', function () {",
+                  "pm.test('Create Company status es 201', function () {",
                   "  pm.expect(pm.response.code).to.equal(201);",
                   "});",
                   "if (pm.response.code === 201) {",
                   "  pm.environment.set('company_id', data.data.data.id);",
                   "}",
-                  "pm.test('Company created successfully', function () {",
-                  "  pm.expect(data.data.data.id).to.be.a('number');",
+                  "pm.test('RUC validado correctamente (13 dígitos)', function () {",
+                  "  pm.expect(data.data.data.ruc).to.equal('1234567890123');",
+                  "  pm.expect(data.data.data.ruc.length).to.equal(13);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -268,29 +493,31 @@
           ]
         },
         {
-          "name": "Get Companies",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/companies", "host": ["{{base_url}}"], "path": ["api", "companies"] }
-          }
-        },
-        {
-          "name": "Create Restaurant",
+          "name": "Crear Empresa (RUC Inválido - Menos de 13 dígitos)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/restaurants", "host": ["{{base_url}}"], "path": ["api", "restaurants"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Restaurante Test\"\n}"
+              "raw": "{\n  \"name\": \"Empresa Inválida\",\n  \"ruc\": \"123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/companies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "companies"]
             }
           },
           "event": [
@@ -298,15 +525,8 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Restaurant status is 201', function () {",
-                  "  pm.expect(pm.response.code).to.equal(201);",
-                  "});",
-                  "if (pm.response.code === 201) {",
-                  "  pm.environment.set('restaurant_id', data.data.data.id);",
-                  "}",
-                  "pm.test('Restaurant created successfully', function () {",
-                  "  pm.expect(data.data.data.id).to.be.a('number');",
+                  "pm.test('RUC inválido debe retornar 422', function () {",
+                  "  pm.expect(pm.response.code).to.equal(422);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -315,34 +535,57 @@
           ]
         },
         {
-          "name": "Get Restaurants",
+          "name": "Listar Empresas",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/restaurants", "host": ["{{base_url}}"], "path": ["api", "restaurants"] }
+            "url": {
+              "raw": "{{base_url}}/api/companies",
+              "host": ["{{base_url}}"],
+              "path": ["api", "companies"]
+            }
           }
         }
       ]
     },
     {
-      "name": "Employees",
+      "name": "4. Empleados (Solo Company Admin)",
       "item": [
         {
-          "name": "Create Employee",
+          "name": "Crear Empleado (Solo Company Admin)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/employees", "host": ["{{base_url}}"], "path": ["api", "employees"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Empleado Test\",\n  \"email\": \"empleado@test.com\",\n  \"company_id\": {{company_id}}\n}"
+              "raw": "{\n  \"full_name\": \"Juan Pérez\",\n  \"email\": \"juan@mesapass.com\",\n  \"phone\": \"+593987654321\",\n  \"company_id\": \"{{company_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/employees",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees"]
             }
           },
           "event": [
@@ -351,15 +594,16 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Create Employee status is 200 or 201', function () {",
+                  "pm.test('Create Employee status es 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
                   "if (pm.response.code === 200 || pm.response.code === 201) {",
                   "  pm.environment.set('employee_id', data.data.data.id);",
                   "  pm.environment.set('qr_token', data.data.data.qr_token);",
                   "}",
-                  "pm.test('Employee created successfully', function () {",
-                  "  pm.expect(data.data.data.id).to.be.a('number');",
+                  "pm.test('Empleado creado exitosamente', function () {",
+                  "  pm.expect(data.data.data.id).to.exist;",
+                  "  pm.expect(data.data.data.qr_token).to.be.a('string');",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -368,93 +612,346 @@
           ]
         },
         {
-          "name": "Get Employees",
+          "name": "Listar Empleados",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/employees", "host": ["{{base_url}}"], "path": ["api", "employees"] }
+            "url": {
+              "raw": "{{base_url}}/api/employees",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees"]
+            }
           }
         },
         {
-          "name": "Get Employee by ID",
+          "name": "Obtener Empleado por ID",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/employees/{{employee_id}}", "host": ["{{base_url}}"], "path": ["api", "employees", "{{employee_id}}"] }
-          }
-        },
-        {
-          "name": "Delete Employee",
-          "request": {
-            "method": "DELETE",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/employees/{{employee_id}}", "host": ["{{base_url}}"], "path": ["api", "employees", "{{employee_id}}"] }
+            "url": {
+              "raw": "{{base_url}}/api/employees/{{employee_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees", "{{employee_id}}"]
+            }
           }
         }
       ]
     },
     {
-      "name": "QR",
+      "name": "5. Restaurantes",
       "item": [
         {
-          "name": "Get QR Image",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/employees/{{employee_id}}/qr", "host": ["{{base_url}}"], "path": ["api", "employees", "{{employee_id}}", "qr"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Validación",
-      "item": [
-        {
-          "name": "Validate QR",
+          "name": "Crear Restaurante",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/validate-qr", "host": ["{{base_url}}"], "path": ["api", "validate-qr"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Restaurante La Abuela\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/restaurants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "restaurants"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Create Restaurant status es 201', function () {",
+                  "  pm.expect(pm.response.code).to.equal(201);",
+                  "});",
+                  "if (pm.response.code === 201) {",
+                  "  pm.environment.set('restaurant_id', data.data.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Restaurantes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/restaurants",
+              "host": ["{{base_url}}"],
+              "path": ["api", "restaurants"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Convenios (Prepago, Postpago, Mixto)",
+      "item": [
+        {
+          "name": "Crear Convenio - Prepago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_id\": \"{{company_id}}\",\n  \"restaurant_id\": \"{{restaurant_id}}\",\n  \"start_date\": \"2026-04-01\",\n  \"end_date\": \"2026-12-31\",\n  \"payment_type\": \"prepaid\",\n  \"daily_budget\": 50.0,\n  \"discount_percentage\": 10.0,\n  \"notes\": \"Prepago con 10% descuento\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agreements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agreements"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Create Agreement (Prepaid) status es 200 o 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('Tipo de pago es prepaid', function () {",
+                  "  pm.expect(data.data.data.payment_type).to.equal('prepaid');",
+                  "});",
+                  "pm.test('Descuento aplicado', function () {",
+                  "  pm.expect(data.data.data.discount_percentage).to.equal(10.0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear Convenio - Postpago",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_id\": \"{{company_id}}\",\n  \"restaurant_id\": \"{{restaurant_id}}\",\n  \"start_date\": \"2026-04-01\",\n  \"end_date\": \"2026-12-31\",\n  \"payment_type\": \"postpaid\",\n  \"daily_budget\": 50.0,\n  \"normal_price\": 7.50,\n  \"discount_price\": 6.50,\n  \"notes\": \"Postpago - pago a fin de mes\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agreements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agreements"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Create Agreement (Postpaid) status es 200 o 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('Tipo de pago es postpaid', function () {",
+                  "  pm.expect(data.data.data.payment_type).to.equal('postpaid');",
+                  "});",
+                  "pm.test('Precios establecidos', function () {",
+                  "  pm.expect(data.data.data.normal_price).to.equal(7.50);",
+                  "  pm.expect(data.data.data.discount_price).to.equal(6.50);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Crear Convenio - Pago Mixto",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"company_id\": \"{{company_id}}\",\n  \"restaurant_id\": \"{{restaurant_id}}\",\n  \"start_date\": \"2026-04-01\",\n  \"end_date\": \"2026-12-31\",\n  \"payment_type\": \"mixed\",\n  \"company_percentage\": 60.0,\n  \"employee_percentage\": 40.0,\n  \"meal_price\": 8.00,\n  \"notes\": \"60% empresa, 40% empleado\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/agreements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agreements"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Create Agreement (Mixed) status es 200 o 201', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "});",
+                  "pm.test('Tipo de pago es mixed', function () {",
+                  "  pm.expect(data.data.data.payment_type).to.equal('mixed');",
+                  "});",
+                  "pm.test('Porcentajes de pago correcto', function () {",
+                  "  pm.expect(data.data.data.company_percentage).to.equal(60.0);",
+                  "  pm.expect(data.data.data.employee_percentage).to.equal(40.0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Listar Convenios",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/agreements",
+              "host": ["{{base_url}}"],
+              "path": ["api", "agreements"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "7. QR y Lectura",
+      "item": [
+        {
+          "name": "Obtener Código QR del Empleado",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/employees/{{employee_id}}/qr",
+              "host": ["{{base_url}}"],
+              "path": ["api", "employees", "{{employee_id}}", "qr"]
+            }
+          }
+        },
+        {
+          "name": "Leer QR (Validar Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
             "body": {
               "mode": "raw",
               "raw": "{\n  \"qr_token\": \"{{qr_token}}\"\n}"
-            }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Agreements",
-      "item": [
-        {
-          "name": "Create Agreement",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/agreements", "host": ["{{base_url}}"], "path": ["api", "agreements"] },
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"company_id\": {{company_id}},\n  \"restaurant_id\": {{restaurant_id}},\n  \"start_date\": \"2026-04-04\",\n  \"end_date\": \"2026-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/validate-qr",
+              "host": ["{{base_url}}"],
+              "path": ["api", "validate-qr"]
             }
           },
           "event": [
@@ -463,50 +960,50 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Create Agreement status is 200 or 201', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "pm.test('QR validation status es 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
-                  "  pm.environment.set('agreement_id', data.data.data.id);",
-                  "}",
-                  "pm.test('Agreement created successfully', function () {",
-                  "  pm.expect(data.data.data.id).to.be.a('number');",
+                  "pm.test('QR válido retorna datos del empleado', function () {",
+                  "  pm.expect(data.data.data.employee_id).to.exist;",
+                  "  pm.expect(data.data.data.employee_name).to.be.a('string');",
                   "});"
                 ],
                 "type": "text/javascript"
               }
             }
           ]
-        },
-        {
-          "name": "Get Agreements",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/agreements", "host": ["{{base_url}}"], "path": ["api", "agreements"] }
-          }
         }
       ]
     },
     {
-      "name": "Meal Logs",
+      "name": "8. Registros de Comidas",
       "item": [
         {
-          "name": "Create Meal Log",
+          "name": "Registrar Comida (Almuerzo)",
           "request": {
             "method": "POST",
             "header": [
-              { "key": "Content-Type", "value": "application/json" },
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/meal-logs", "host": ["{{base_url}}"], "path": ["api", "meal-logs"] },
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employee_id\": {{employee_id}},\n  \"agreement_id\": {{agreement_id}},\n  \"meal_type\": \"Lunch\",\n  \"total_amount\": 5.5\n}"
+              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"restaurant_id\": \"{{restaurant_id}}\",\n  \"agreement_id\": \"{{agreement_id}}\",\n  \"meal_type\": \"Lunch\",\n  \"meal_date\": \"2026-04-10\",\n  \"amount\": 7.50,\n  \"notes\": \"Almuerzo del día\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/meal-logs",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meal-logs"]
             }
           },
           "event": [
@@ -515,11 +1012,12 @@
               "script": {
                 "exec": [
                   "const data = pm.response.json();",
-                  "pm.test('Create Meal Log status is 200 or 201', function () {",
+                  "pm.test('Create Meal Log status es 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "pm.test('Meal log created successfully', function () {",
-                  "  pm.expect(data.data.data.id).to.be.a('number');",
+                  "pm.test('Comida registrada exitosamente', function () {",
+                  "  pm.expect(data.data.data.id).to.exist;",
+                  "  pm.expect(data.data.data.amount).to.equal(7.50);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -528,64 +1026,92 @@
           ]
         },
         {
-          "name": "Get Meal Logs",
+          "name": "Listar Registros de Comidas",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
-            ],
-            "url": { "raw": "{{base_url}}/api/meal-logs", "host": ["{{base_url}}"], "path": ["api", "meal-logs"] }
-          }
-        }
-      ]
-    },
-    {
-      "name": "Reports",
-      "item": [
-        {
-          "name": "Consumption Report",
-          "request": {
-            "method": "GET",
-            "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
             "url": {
-              "raw": "{{base_url}}/api/reports/consumption?employee_id={{employee_id}}",
+              "raw": "{{base_url}}/api/meal-logs",
               "host": ["{{base_url}}"],
-              "path": ["api", "reports", "consumption"],
-              "query": [
-                { "key": "employee_id", "value": "{{employee_id}}" }
-              ]
+              "path": ["api", "meal-logs"]
             }
           }
-        },
+        }
+      ]
+    },
+    {
+      "name": "9. Reportes y Consumo",
+      "item": [
         {
-          "name": "Billing Report",
+          "name": "Reporte de Consumo del Empleado (Por QR)",
           "request": {
             "method": "GET",
             "header": [
-              { "key": "Authorization", "value": "Bearer {{token}}" },
-              { "key": "X-Tenant-ID", "value": "{{tenant_id}}" }
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
             ],
-            "url": { "raw": "{{base_url}}/api/reports/billing", "host": ["{{base_url}}"], "path": ["api", "reports", "billing"] }
+            "url": {
+              "raw": "{{base_url}}/api/meal-logs/employee/{{employee_id}}/consumption",
+              "host": ["{{base_url}}"],
+              "path": ["api", "meal-logs", "employee", "{{employee_id}}", "consumption"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const data = pm.response.json();",
+                  "pm.test('Consumption Report status es 200', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Reporte debe incluir consumo total', function () {",
+                  "  pm.expect(data.data.data.total_consumption).to.be.a('number');",
+                  "  pm.expect(data.data.data.meals).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reporte de Facturación",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/reports/billing",
+              "host": ["{{base_url}}"],
+              "path": ["api", "reports", "billing"]
+            }
           }
         }
       ]
     }
-  ],
-  "variable": [
-    { "key": "base_url", "value": "http://127.0.0.1:8000" },
-    { "key": "token", "value": "" },
-    { "key": "tenant_id", "value": "" },
-    { "key": "user_id", "value": "" },
-    { "key": "company_id", "value": "" },
-    { "key": "restaurant_id", "value": "" },
-    { "key": "employee_id", "value": "" },
-    { "key": "qr_token", "value": "" },
-    { "key": "agreement_id", "value": "" },
-    { "key": "invitation_code", "value": "" },
-    { "key": "invited_user_id", "value": "" }
   ]
 }

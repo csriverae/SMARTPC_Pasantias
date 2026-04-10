@@ -8,3 +8,4 @@ from .employee import Employee
 from .meal_log import MealLog
 from .tenant import Tenant
 from .user_tenant import UserTenant
+from .password_reset import PasswordReset

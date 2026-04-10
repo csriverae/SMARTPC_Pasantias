@@ -17,6 +17,8 @@ def create_user(db: Session, user: UserCreate) -> User:
         email=user.email,
         password=hashed_password,
         full_name=full_name,
+        phone=getattr(user, 'phone', None),
+        address=getattr(user, 'address', None),
         role=role
     )
     db.add(db_user)

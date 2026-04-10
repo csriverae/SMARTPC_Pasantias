@@ -106,28 +106,9 @@ def create_company(
     db: Session = Depends(get_db)
 ):
     try:
-        from app.models.company import Company
+        from app.crud.company import create_company
         
-        if not company_data.name:
-            return JSONResponse(
-                status_code=400,
-                content={
-                    "message": "El nombre de la compañía es requerido",
-                    "status": 400,
-                    "error": True,
-                    "data": {"data": None}
-                }
-            )
-        
-        new_company = Company(
-            name=company_data.name,
-            ruc=company_data.ruc,
-            tenant_id=tenant_id
-        )
-        
-        db.add(new_company)
-        db.commit()
-        db.refresh(new_company)
+        new_company = create_company(db, company_data, tenant_id)
         
         company_response = {
             "id": new_company.id,
@@ -144,6 +125,16 @@ def create_company(
                 "status": 201,
                 "error": False,
                 "data": {"data": company_response}
+            }
+        )
+    except ValueError as ve:
+        return JSONResponse(
+            status_code=400,
+            content={
+                "message": str(ve),
+                "status": 400,
+                "error": True,
+                "data": {"data": None}
             }
         )
     except Exception as e:
