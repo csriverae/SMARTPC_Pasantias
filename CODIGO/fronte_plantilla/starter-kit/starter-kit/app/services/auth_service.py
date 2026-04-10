@@ -68,7 +68,7 @@ class AuthService:
         }
 
     @staticmethod
-    def register_owner(db: Session, email: str, password: str, full_name: str, tenant_name: str):
+    def register_owner(db: Session, email: str, password: str, full_name: str, tenant_name: str, phone: str | None = None, address: str | None = None):
         """Register a new tenant owner and create tenant automatically"""
         existing_user = db.query(User).filter(User.email == email).first()
         if existing_user:
@@ -88,6 +88,8 @@ class AuthService:
             email=email,
             password=get_password_hash(password),
             full_name=full_name,
+            phone=phone,
+            address=address,
             role=UserRole.admin
         )
         db.add(new_user)
@@ -104,3 +106,81 @@ class AuthService:
         db.refresh(tenant)
 
         return new_user, tenant, user_tenant
+
+    @staticmethod
+    def delete_user(db: Session, user_id: int, current_user_id: int, tenant_id: str):
+        """Delete a user from the tenant (admin only)"""
+        # Check if user exists
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Usuario no encontrado"
+            )
+
+        # Check if current user is admin in the tenant
+        current_user_tenant = db.query(UserTenant).filter(
+            UserTenant.user_id == current_user_id,
+            UserTenant.tenant_id == tenant_id,
+            UserTenant.role.in_(["admin", "owner"])
+        ).first()
+
+        if not current_user_tenant:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="No tienes permisos para eliminar usuarios"
+            )
+
+        # Cannot delete yourself
+        if user_id == current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No puedes eliminar tu propio usuario"
+            )
+
+        # Check if target user belongs to the tenant
+        target_user_tenant = db.query(UserTenant).filter(
+            UserTenant.user_id == user_id,
+            UserTenant.tenant_id == tenant_id
+        ).first()
+
+        if not target_user_tenant:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="El usuario no pertenece a este tenant"
+            )
+
+        # Delete user-tenant relationship first
+        db.delete(target_user_tenant)
+
+        # Check if user has other tenants
+        other_tenants = db.query(UserTenant).filter(UserTenant.user_id == user_id).count()
+
+        if other_tenants == 0:
+            # User has no other tenants, delete the user completely
+            # Delete related records first
+            from app.models.password_reset import PasswordReset
+            from app.models.user_invitation import UserInvitation
+            from app.models.meal_log import MealLog
+            from app.models.employee import Employee
+
+            # Delete password resets
+            db.query(PasswordReset).filter(PasswordReset.user_id == user_id).delete()
+
+            # Delete invitations sent by this user
+            db.query(UserInvitation).filter(UserInvitation.invited_by == user_id).delete()
+
+            # Delete meal logs
+            db.query(MealLog).filter(MealLog.employee_id.in_(
+                db.query(Employee.id).filter(Employee.user_id == user_id)
+            )).delete()
+
+            # Delete employees
+            db.query(Employee).filter(Employee.user_id == user_id).delete()
+
+            # Finally delete the user
+            db.delete(user)
+
+        db.commit()
+
+        return {"message": "Usuario eliminado exitosamente"}

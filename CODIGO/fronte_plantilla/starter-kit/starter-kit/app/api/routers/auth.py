@@ -10,7 +10,7 @@ from app.core.security import generate_unique_token, get_current_user
 from app.crud.password_reset import (
     create_password_reset,
     get_password_reset_by_code,
-    mark_password_reset_used
+    mark_reset_code_used
 )
 from app.crud.user import get_user_by_email, update_user_password
 import secrets
@@ -25,6 +25,8 @@ class UserRegister(BaseModel):
     password: str
     full_name: str
     tenant_name: str
+    phone: str | None = None
+    address: str | None = None
 
 
 def get_db():
@@ -47,7 +49,9 @@ def register(register_data: UserRegister, db: Session = Depends(get_db)):
             email=register_data.email,
             password=register_data.password,
             full_name=register_data.full_name,
-            tenant_name=register_data.tenant_name
+            tenant_name=register_data.tenant_name,
+            phone=register_data.phone,
+            address=register_data.address
         )
 
         tokens = AuthService.create_tokens(
@@ -73,6 +77,8 @@ def register(register_data: UserRegister, db: Session = Depends(get_db)):
                             "user_id": user.id,
                             "email": user.email,
                             "full_name": user.full_name,
+                            "phone": user.phone,
+                            "address": user.address,
                             "tenant_role": user_tenant.role
                         }
                     }
@@ -143,6 +149,8 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
                             "user_id": user.id,
                             "email": user.email,
                             "full_name": user.full_name,
+                            "phone": user.phone,
+                            "address": user.address,
                             "tenant_role": first_tenant["role"],
                             "tenants": tenants
                         }
@@ -258,6 +266,8 @@ def get_current_user_info(
                         "user_id": current_user.id,
                         "email": current_user.email,
                         "full_name": current_user.full_name,
+                        "phone": current_user.phone,
+                        "address": current_user.address,
                         "role": current_user.role.value if current_user.role else "user",
                         "tenant_id": tenant_id,
                         "tenants": tenants
@@ -277,6 +287,233 @@ def get_current_user_info(
             }
         )
 
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": f"Error: {str(e)}",
+                "status": 500,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+
+
+@router.post("/forgot-password", tags=["Authentication"])
+def forgot_password(request_data: PasswordResetRequest, db: Session = Depends(get_db)):
+    """
+    Request password reset - sends code to email
+    Headers required: None
+    """
+    try:
+        user = get_user_by_email(db, request_data.email)
+        
+        if not user:
+            # Don't reveal if email exists or not (security best practice)
+            return JSONResponse(
+                status_code=200,
+                content={
+                    "message": "Si el correo existe, se envió un código a tu email",
+                    "status": 200,
+                    "error": False,
+                    "data": {"data": None}
+                }
+            )
+        
+        # Create password reset record with code
+        password_reset = create_password_reset(db, request_data.email)
+        
+        # TODO: Send email with reset code
+        print(f"📧 Password reset code for {request_data.email}: {password_reset.reset_code}")
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Se envió un código de recuperación a tu correo (válido 15 minutos)",
+                "status": 200,
+                "error": False,
+                "data": {"data": {"reset_code": password_reset.reset_code}}  # En producción, no enviar el código aquí
+            }
+        )
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": f"Error: {str(e)}",
+                "status": 500,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+
+
+@router.post("/reset-password", tags=["Authentication"])
+def reset_password(reset_data: PasswordResetConfirm, db: Session = Depends(get_db)):
+    """
+    Reset password using reset code
+    Headers required: None
+    """
+    try:
+        # Verify reset code
+        password_reset = get_password_reset_by_code(db, reset_data.reset_code)
+        
+        if not password_reset:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Código de recuperación inválido o expirado"
+            )
+        
+        # Verify passwords match
+        if reset_data.new_password != reset_data.confirm_password:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Las contraseñas no coinciden"
+            )
+        
+        # Update user password
+        user = password_reset.user
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Usuario no encontrado"
+            )
+        
+        update_user_password(db, user, reset_data.new_password)
+        
+        # Mark reset code as used
+        mark_reset_code_used(db, reset_data.reset_code)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "Contraseña actualizada exitosamente",
+                "status": 200,
+                "error": False,
+                "data": {"data": None}
+            }
+        )
+    
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "message": e.detail,
+                "status": e.status_code,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": f"Error: {str(e)}",
+                "status": 500,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+
+
+@router.delete("/users/{user_id}", tags=["User Management"])
+def delete_user(
+    user_id: int,
+    request: Request,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """
+    Delete a user from the tenant (admin only)
+    Headers required: Authorization: Bearer <token>, X-Tenant-ID: <tenant_id>
+    """
+    try:
+        tenant_id = request.headers.get("X-Tenant-ID")
+        if not tenant_id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="X-Tenant-ID header requerido"
+            )
+
+        result = AuthService.delete_user(
+            db=db,
+            user_id=user_id,
+            current_user_id=current_user.id,
+            tenant_id=tenant_id
+        )
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": result["message"],
+                "status": 200,
+                "error": False,
+                "data": {"data": None}
+            }
+        )
+
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "message": e.detail,
+                "status": e.status_code,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": f"Error al eliminar usuario: {str(e)}",
+                "status": 500,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+
+
+# ⚠️ DEVELOPMENT ONLY - Remove in production
+@router.get("/debug/password-reset-codes", tags=["Debug"])
+def debug_get_password_reset_codes(db: Session = Depends(get_db)):
+    """
+    DEBUG ENDPOINT - Get all active password reset codes (Development only)
+    Remove this endpoint in production
+    """
+    try:
+        from app.models.password_reset import PasswordReset
+        
+        # Get all non-used reset codes
+        reset_codes = db.query(PasswordReset).filter(
+            PasswordReset.used == 0,
+            PasswordReset.expires_at > datetime.utcnow()
+        ).all()
+        
+        codes_data = []
+        for code in reset_codes:
+            codes_data.append({
+                "email": code.email,
+                "reset_code": code.reset_code,
+                "expires_at": code.expires_at.isoformat() if code.expires_at else None,
+                "created_at": code.created_at.isoformat() if code.created_at else None,
+                "user_id": code.user_id
+            })
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": f"Se encontraron {len(codes_data)} códigos activos",
+                "status": 200,
+                "error": False,
+                "data": {
+                    "data": codes_data
+                }
+            }
+        )
+    
     except Exception as e:
         return JSONResponse(
             status_code=500,

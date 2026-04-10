@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Proyecto_MESAPASS_COMPLETE",
-    "description": "Colección Postman completa para pruebas del backend FastAPI SaaS de MesaPass. Token Duration: 30 minutes | Refresh Token: 7 days",
+    "name": "🍽️ MesaPass - SaaS Meal Management System",
+    "description": "Colección completa de Postman para pruebas del backend FastAPI SaaS de MesaPass.\n\n⏱️ DURACIONES:\n• Access Token: 30 minutos\n• Refresh Token: 7 días\n• Password Reset Code: 15 minutos\n• Invitation Code: Sin expiración (única vez)\n\n📋 VALIDACIONES:\n• RUC: Exactamente 13 dígitos\n• Contraseña mínimo: 6 caracteres\n• Contraseña auto-generada (invitaciones): 16 caracteres\n\n🔐 SEGURIDAD:\n• Incluir header 'Authorization: Bearer {{token}}'\n• Incluir header 'X-Tenant-ID: {{tenant_id}}' para rutas autenticadas\n• Los endpoints Debug solo están disponibles en desarrollo",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -59,14 +59,19 @@
       "key": "reset_code",
       "value": "",
       "type": "string"
+    },
+    {
+      "key": "invited_user_id",
+      "value": "",
+      "type": "string"
     }
   ],
   "item": [
     {
-      "name": "INFORMACIÓN IMPORTANTE",
+      "name": "📚 DOCUMENTACIÓN Y DEBUG",
       "item": [
         {
-          "name": "📋 Duración de Tokens",
+          "name": "📖 Ver Documentación OpenAPI",
           "request": {
             "method": "GET",
             "header": [],
@@ -75,16 +80,51 @@
               "host": ["{{base_url}}"],
               "path": ["docs"]
             },
-            "description": "⏱️ ACCESS TOKEN: 30 minutos\n⏱️ REFRESH TOKEN: 7 días\n⏱️ PASSWORD RESET CODE: 15 minutos\n⏱️ INVITATION CODE: Sin expiración (única vez)\n\nRUC: Exactamente 13 dígitos, no puede estar registrado\nPASSWORD: Mínimo 6 caracteres\nINVITATION: La contraseña se genera automáticamente (16 caracteres)"
+            "description": "Abre la documentación interactiva de Swagger UI en el navegador"
           }
+        },
+        {
+          "name": "🔍 DEBUG - Ver códigos de recuperación activos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/auth/debug/password-reset-codes",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "debug", "password-reset-codes"]
+            },
+            "description": "⚠️ SOLO DESARROLLO - Retorna todos los códigos de recuperación de contraseña activos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test('Retorna array de códigos', function () {",
+                  "  pm.expect(data.data.data).to.be.an('array');",
+                  "});",
+                  "if (data.data.data.length > 0) {",
+                  "  pm.test('Primer código tiene estructura correcta', function () {",
+                  "    pm.expect(data.data.data[0]).to.have.keys('email', 'reset_code', 'expires_at', 'created_at', 'user_id');",
+                  "  });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
     {
-      "name": "1. Autenticación",
+      "name": "🔐 AUTENTICACIÓN",
       "item": [
         {
-          "name": "Register - Admin (Email, Contraseña, Empresa)",
+          "name": "1️⃣ Registrar - Crear Empresa y Admin",
           "request": {
             "method": "POST",
             "header": [
@@ -95,34 +135,35 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"Admin123\",\n  \"tenant_name\": \"MesaPass Corp\",\n  \"full_name\": \"Admin User\",\n  \"phone\": \"+593987654321\",\n  \"address\": \"Calle Principal 123, Quito\"\n}"
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"password\": \"Admin123\",\n  \"tenant_name\": \"MesaPass Corp\",\n  \"full_name\": \"Admin Usuario\",\n  \"phone\": \"+593987654321\",\n  \"address\": \"Calle Principal 123, Quito\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/auth/register",
               "host": ["{{base_url}}"],
               "path": ["auth", "register"]
-            }
+            },
+            "description": "Crea un nuevo tenant/empresa y un usuario admin como propietario"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Register status is 200 o 201', function () {",
+                  "pm.test('Status 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.test('Retorna access_token', function () {",
+                  "  pm.expect(data.data.data.access_token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "pm.test('Incluye tenant_id', function () {",
+                  "  pm.expect(data.data.data.tenant_id).to.exist;",
+                  "});",
+                  "if (data.data.data.access_token) {",
                   "  pm.environment.set('token', data.data.data.access_token);",
                   "  pm.environment.set('tenant_id', data.data.data.tenant_id);",
-                  "}",
-                  "pm.test('Debe retornar access_token', function () {",
-                  "  pm.expect(data.data.data.access_token).to.be.a('string');",
-                  "});",
-                  "pm.test('Debe incluir phone y address', function () {",
-                  "  pm.expect(data.data.data.phone).to.exist;",
-                  "  pm.expect(data.data.data.address).to.exist;",
-                  "});"
+                  "  pm.environment.set('user_id', data.data.data.user.user_id);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -130,7 +171,7 @@
           ]
         },
         {
-          "name": "Login - Admin (Por Email y Rol)",
+          "name": "2️⃣ Login - Por Email y Contraseña",
           "request": {
             "method": "POST",
             "header": [
@@ -147,27 +188,27 @@
               "raw": "{{base_url}}/auth/login",
               "host": ["{{base_url}}"],
               "path": ["auth", "login"]
-            }
+            },
+            "description": "Autentica un usuario existente y retorna tokens"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Login status es 200 o 201', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.test('Retorna tokens', function () {",
+                  "  pm.expect(data.data.data.access_token).to.be.a('string');",
+                  "  pm.expect(data.data.data.refresh_token).to.be.a('string');",
+                  "  pm.expect(data.data.data.token_type).to.equal('bearer');",
+                  "});",
+                  "if (data.data.data.access_token) {",
                   "  pm.environment.set('token', data.data.data.access_token);",
                   "  pm.environment.set('tenant_id', data.data.data.tenant_id);",
-                  "}",
-                  "pm.test('Retorna access_token', function () {",
-                  "  pm.expect(data.data.data.access_token).to.be.a('string');",
-                  "});",
-                  "pm.test('Retorna role del usuario', function () {",
-                  "  pm.expect(data.data.data.role).to.be.a('string');",
-                  "});"
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -175,83 +216,7 @@
           ]
         },
         {
-          "name": "Olvidé Contraseña (Enviar Código por Email)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@mesapass.com\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/forgot-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "forgot-password"]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Forgot Password status es 200', function () {",
-                  "  pm.expect(pm.response.code).to.equal(200);",
-                  "});",
-                  "pm.test('Retorna mensaje de éxito', function () {",
-                  "  pm.expect(data.data.message).to.include('código');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Reestablecer Contraseña (Con Código Temporal)",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"reset_code\": \"123456\",\n  \"new_password\": \"NuevaContraseña123\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/auth/reset-password",
-              "host": ["{{base_url}}"],
-              "path": ["auth", "reset-password"]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Reset Password status es 200', function () {",
-                  "  pm.expect(pm.response.code).to.equal(200);",
-                  "});",
-                  "pm.test('Mensaje de éxito', function () {",
-                  "  pm.expect(data.data.message).to.include('exitosamente');",
-                  "});"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ]
-        },
-        {
-          "name": "Obtener Usuario Actual",
+          "name": "3️⃣ Obtener Usuario Actual",
           "request": {
             "method": "GET",
             "header": [
@@ -268,23 +233,147 @@
               "raw": "{{base_url}}/auth/me",
               "host": ["{{base_url}}"],
               "path": ["auth", "me"]
-            }
+            },
+            "description": "Obtiene los datos del usuario autenticado actual"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Status es 200', function () {",
+                  "pm.test('Status 200 OK', function () {",
                   "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
+                  "const data = pm.response.json();",
                   "pm.test('Retorna datos del usuario', function () {",
-                  "  pm.expect(data.data.data.email).to.be.a('string');",
-                  "  pm.expect(data.data.data.role).to.be.a('string');",
+                  "  pm.expect(data.data.data).to.have.keys('user_id', 'email', 'full_name', 'phone', 'address', 'role', 'tenant_id', 'tenants');",
+                  "});",
+                  "pm.test('Usuario tiene phone y address', function () {",
                   "  pm.expect(data.data.data.phone).to.exist;",
                   "  pm.expect(data.data.data.address).to.exist;",
                   "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "4️⃣ Olvidé Contraseña - Solicitar Código",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/forgot-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "forgot-password"]
+            },
+            "description": "Solicita un código de recuperación (válido 15 minutos) - En desarrollo se retorna en la respuesta"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test('Retorna código en desarrollo', function () {",
+                  "  pm.expect(data.data.data.reset_code).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (data.data.data.reset_code) {",
+                  "  pm.environment.set('reset_code', data.data.data.reset_code);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "5️⃣ Reestablecer Contraseña - Con Código",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@mesapass.com\",\n  \"reset_code\": \"{{reset_code}}\",\n  \"new_password\": \"NuevaContraseña123\",\n  \"confirm_password\": \"NuevaContraseña123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/reset-password",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "reset-password"]
+            },
+            "description": "Cambia la contraseña usando un código de recuperación válido"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test('Mensaje de éxito', function () {",
+                  "  pm.expect(data.data.message).to.include('exitosamente');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "6️⃣ Eliminar Usuario",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/auth/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "users", "{{user_id}}"]
+            },
+            "description": "Elimina un usuario del tenant desde el módulo de auth. Solo administradores pueden eliminar usuarios. Usa {{user_id}} para eliminar cualquier usuario del tenant"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK o 204 No Content', function () {",
+                  "  pm.expect(pm.response.code).to.be.oneOf([200, 204]);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "if (data && data.data && data.data.message) {",
+                  "  pm.test('Mensaje de eliminación exitosa', function () {",
+                  "    pm.expect(data.data.message).to.include('eliminado');",
+                  "  });",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -294,10 +383,10 @@
       ]
     },
     {
-      "name": "2. Usuarios e Invitaciones",
+      "name": "👥 USUARIOS E INVITACIONES",
       "item": [
         {
-          "name": "Listar Usuarios",
+          "name": "Listar Usuarios del Tenant",
           "request": {
             "method": "GET",
             "header": [
@@ -314,7 +403,8 @@
               "raw": "{{base_url}}/api/users",
               "host": ["{{base_url}}"],
               "path": ["api", "users"]
-            }
+            },
+            "description": "Obtiene todos los usuarios del tenant actual"
           }
         },
         {
@@ -343,27 +433,28 @@
               "raw": "{{base_url}}/api/users/invite",
               "host": ["{{base_url}}"],
               "path": ["api", "users", "invite"]
-            }
+            },
+            "description": "Invita un usuario nuevo generando automáticamente una contraseña de 16 caracteres"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Invite User status es 201', function () {",
+                  "pm.test('Status 201 Created', function () {",
                   "  pm.expect(pm.response.code).to.equal(201);",
                   "});",
-                  "if (pm.response.code === 201) {",
-                  "  pm.environment.set('invitation_code', data.data.data.code);",
-                  "}",
+                  "const data = pm.response.json();",
                   "pm.test('Retorna código de invitación', function () {",
-                  "  pm.expect(data.data.data.code).to.be.a('string');",
+                  "  pm.expect(data.data.data.code).to.be.a('string').and.not.empty;",
                   "});",
-                  "pm.test('Incluye contraseña auto-generada', function () {",
+                  "pm.test('Incluye contraseña auto-generada (16 caracteres)', function () {",
                   "  pm.expect(data.data.data.generated_password).to.be.a('string');",
                   "  pm.expect(data.data.data.generated_password.length).to.equal(16);",
-                  "});"
+                  "});",
+                  "if (data.data.data.code) {",
+                  "  pm.environment.set('invitation_code', data.data.data.code);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -371,7 +462,7 @@
           ]
         },
         {
-          "name": "Aceptar Invitación (Usar Contraseña Auto-generada)",
+          "name": "Aceptar Invitación",
           "request": {
             "method": "POST",
             "header": [
@@ -388,62 +479,37 @@
               "raw": "{{base_url}}/api/invitations/accept",
               "host": ["{{base_url}}"],
               "path": ["api", "invitations", "accept"]
-            }
+            },
+            "description": "Acepta una invitación para crear la cuenta con la contraseña auto-generada"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Accept Invitation status es 200', function () {",
+                  "pm.test('Status 200 OK', function () {",
                   "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
+                  "const data = pm.response.json();",
                   "pm.test('Usuario creado exitosamente', function () {",
                   "  pm.expect(data.data.data.user_id).to.exist;",
-                  "});"
+                  "});",
+                  "if (data.data.data.user_id) {",
+                  "  pm.environment.set('invited_user_id', data.data.data.user_id);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
             }
           ]
-        },
-        {
-          "name": "Actualizar Rol del Usuario",
-          "request": {
-            "method": "PATCH",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              },
-              {
-                "key": "Authorization",
-                "value": "Bearer {{token}}"
-              },
-              {
-                "key": "X-Tenant-ID",
-                "value": "{{tenant_id}}"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"role\": \"company_admin\"\n}"
-            },
-            "url": {
-              "raw": "{{base_url}}/api/users/{{user_id}}/role",
-              "host": ["{{base_url}}"],
-              "path": ["api", "users", "{{user_id}}", "role"]
-            }
-          }
         }
       ]
     },
     {
-      "name": "3. Empresas (RUC Validation)",
+      "name": "🏢 EMPRESAS (RUC Validation)",
       "item": [
         {
-          "name": "Crear Empresa (Validación RUC Válido)",
+          "name": "Crear Empresa (RUC válido - 13 dígitos)",
           "request": {
             "method": "POST",
             "header": [
@@ -462,30 +528,31 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"Empresa MesaPass\",\n  \"ruc\": \"1234567890123\"\n}"
+              "raw": "{\n  \"name\": \"Empresa Test\",\n  \"ruc\": \"1234567890123\"\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/companies",
               "host": ["{{base_url}}"],
               "path": ["api", "companies"]
-            }
+            },
+            "description": "Crea una empresa. RUC debe ser exactamente 13 dígitos"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Company status es 201', function () {",
+                  "pm.test('Status 201 Created', function () {",
                   "  pm.expect(pm.response.code).to.equal(201);",
                   "});",
-                  "if (pm.response.code === 201) {",
-                  "  pm.environment.set('company_id', data.data.data.id);",
-                  "}",
-                  "pm.test('RUC validado correctamente (13 dígitos)', function () {",
+                  "const data = pm.response.json();",
+                  "pm.test('RUC validado (13 dígitos)', function () {",
                   "  pm.expect(data.data.data.ruc).to.equal('1234567890123');",
                   "  pm.expect(data.data.data.ruc.length).to.equal(13);",
-                  "});"
+                  "});",
+                  "if (data.data.data.id) {",
+                  "  pm.environment.set('company_id', data.data.data.id);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -493,7 +560,7 @@
           ]
         },
         {
-          "name": "Crear Empresa (RUC Inválido - Menos de 13 dígitos)",
+          "name": "Crear Empresa (RUC Inválido - Error 422)",
           "request": {
             "method": "POST",
             "header": [
@@ -518,14 +585,15 @@
               "raw": "{{base_url}}/api/companies",
               "host": ["{{base_url}}"],
               "path": ["api", "companies"]
-            }
+            },
+            "description": "Prueba de validación - RUC por debajo de 13 dígitos debe fallar"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('RUC inválido debe retornar 422', function () {",
+                  "pm.test('Status 422 Validation Error', function () {",
                   "  pm.expect(pm.response.code).to.equal(422);",
                   "});"
                 ],
@@ -552,13 +620,14 @@
               "raw": "{{base_url}}/api/companies",
               "host": ["{{base_url}}"],
               "path": ["api", "companies"]
-            }
+            },
+            "description": "Obtiene todas las empresas del tenant"
           }
         }
       ]
     },
     {
-      "name": "4. Empleados (Solo Company Admin)",
+      "name": "👨‍💼 EMPLEADOS (Solo Company Admin)",
       "item": [
         {
           "name": "Crear Empleado (Solo Company Admin)",
@@ -586,25 +655,26 @@
               "raw": "{{base_url}}/api/employees",
               "host": ["{{base_url}}"],
               "path": ["api", "employees"]
-            }
+            },
+            "description": "Crea un empleado. Solo users con role 'company_admin' pueden crear empleados"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Employee status es 200 o 201', function () {",
+                  "pm.test('Status 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "if (pm.response.code === 200 || pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "pm.test('Empleado creado con QR Token', function () {",
+                  "  pm.expect(data.data.data.id).to.exist;",
+                  "  pm.expect(data.data.data.qr_token).to.be.a('string').and.not.empty;",
+                  "});",
+                  "if (data.data.data.id) {",
                   "  pm.environment.set('employee_id', data.data.data.id);",
                   "  pm.environment.set('qr_token', data.data.data.qr_token);",
-                  "}",
-                  "pm.test('Empleado creado exitosamente', function () {",
-                  "  pm.expect(data.data.data.id).to.exist;",
-                  "  pm.expect(data.data.data.qr_token).to.be.a('string');",
-                  "});"
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -629,7 +699,8 @@
               "raw": "{{base_url}}/api/employees",
               "host": ["{{base_url}}"],
               "path": ["api", "employees"]
-            }
+            },
+            "description": "Obtiene todos los empleados del tenant"
           }
         },
         {
@@ -650,13 +721,14 @@
               "raw": "{{base_url}}/api/employees/{{employee_id}}",
               "host": ["{{base_url}}"],
               "path": ["api", "employees", "{{employee_id}}"]
-            }
+            },
+            "description": "Obtiene un empleado específico incluyendo su QR Token"
           }
         }
       ]
     },
     {
-      "name": "5. Restaurantes",
+      "name": "🍽️ RESTAURANTES",
       "item": [
         {
           "name": "Crear Restaurante",
@@ -684,18 +756,19 @@
               "raw": "{{base_url}}/api/restaurants",
               "host": ["{{base_url}}"],
               "path": ["api", "restaurants"]
-            }
+            },
+            "description": "Crea un restaurante en el tenant"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Restaurant status es 201', function () {",
+                  "pm.test('Status 201 Created', function () {",
                   "  pm.expect(pm.response.code).to.equal(201);",
                   "});",
-                  "if (pm.response.code === 201) {",
+                  "const data = pm.response.json();",
+                  "if (data.data.data.id) {",
                   "  pm.environment.set('restaurant_id', data.data.data.id);",
                   "}"
                 ],
@@ -722,16 +795,17 @@
               "raw": "{{base_url}}/api/restaurants",
               "host": ["{{base_url}}"],
               "path": ["api", "restaurants"]
-            }
+            },
+            "description": "Obtiene todos los restaurantes del tenant"
           }
         }
       ]
     },
     {
-      "name": "6. Convenios (Prepago, Postpago, Mixto)",
+      "name": "📋 CONVENIOS (Prepago, Postpago, Mixto)",
       "item": [
         {
-          "name": "Crear Convenio - Prepago",
+          "name": "Crear Convenio - PREPAGO (con descuento)",
           "request": {
             "method": "POST",
             "header": [
@@ -756,23 +830,27 @@
               "raw": "{{base_url}}/api/agreements",
               "host": ["{{base_url}}"],
               "path": ["api", "agreements"]
-            }
+            },
+            "description": "Crea un convenio PREPAGO entre empresa y restaurante con descuento por pago adelantado"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Agreement (Prepaid) status es 200 o 201', function () {",
+                  "pm.test('Status 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "pm.test('Tipo de pago es prepaid', function () {",
+                  "const data = pm.response.json();",
+                  "pm.test('payment_type es prepaid', function () {",
                   "  pm.expect(data.data.data.payment_type).to.equal('prepaid');",
                   "});",
-                  "pm.test('Descuento aplicado', function () {",
+                  "pm.test('Descuento aplicado correctamente', function () {",
                   "  pm.expect(data.data.data.discount_percentage).to.equal(10.0);",
-                  "});"
+                  "});",
+                  "if (data.data.data.id) {",
+                  "  pm.environment.set('agreement_id', data.data.data.id);",
+                  "}"
                 ],
                 "type": "text/javascript"
               }
@@ -780,7 +858,7 @@
           ]
         },
         {
-          "name": "Crear Convenio - Postpago",
+          "name": "Crear Convenio - POSTPAGO (normal o descuento)",
           "request": {
             "method": "POST",
             "header": [
@@ -805,21 +883,22 @@
               "raw": "{{base_url}}/api/agreements",
               "host": ["{{base_url}}"],
               "path": ["api", "agreements"]
-            }
+            },
+            "description": "Crea un convenio POSTPAGO con dos precios: normal y con descuento"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Agreement (Postpaid) status es 200 o 201', function () {",
+                  "pm.test('Status 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "pm.test('Tipo de pago es postpaid', function () {",
+                  "const data = pm.response.json();",
+                  "pm.test('payment_type es postpaid', function () {",
                   "  pm.expect(data.data.data.payment_type).to.equal('postpaid');",
                   "});",
-                  "pm.test('Precios establecidos', function () {",
+                  "pm.test('Precios configurados', function () {",
                   "  pm.expect(data.data.data.normal_price).to.equal(7.50);",
                   "  pm.expect(data.data.data.discount_price).to.equal(6.50);",
                   "});"
@@ -830,7 +909,7 @@
           ]
         },
         {
-          "name": "Crear Convenio - Pago Mixto",
+          "name": "Crear Convenio - PAGO MIXTO (% empresa/empleado)",
           "request": {
             "method": "POST",
             "header": [
@@ -855,21 +934,22 @@
               "raw": "{{base_url}}/api/agreements",
               "host": ["{{base_url}}"],
               "path": ["api", "agreements"]
-            }
+            },
+            "description": "Crea un convenio MIXTO donde empresa y empleado pagan porcentajes: empresa 60%, empleado 40%"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Agreement (Mixed) status es 200 o 201', function () {",
+                  "pm.test('Status 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "pm.test('Tipo de pago es mixed', function () {",
+                  "const data = pm.response.json();",
+                  "pm.test('payment_type es mixed', function () {",
                   "  pm.expect(data.data.data.payment_type).to.equal('mixed');",
                   "});",
-                  "pm.test('Porcentajes de pago correcto', function () {",
+                  "pm.test('Porcentajes configurados correctamente', function () {",
                   "  pm.expect(data.data.data.company_percentage).to.equal(60.0);",
                   "  pm.expect(data.data.data.employee_percentage).to.equal(40.0);",
                   "});"
@@ -897,16 +977,17 @@
               "raw": "{{base_url}}/api/agreements",
               "host": ["{{base_url}}"],
               "path": ["api", "agreements"]
-            }
+            },
+            "description": "Obtiene todos los convenios del tenant"
           }
         }
       ]
     },
     {
-      "name": "7. QR y Lectura",
+      "name": "📱 QR Y LECTURA",
       "item": [
         {
-          "name": "Obtener Código QR del Empleado",
+          "name": "Obtener QR del Empleado",
           "request": {
             "method": "GET",
             "header": [
@@ -923,7 +1004,8 @@
               "raw": "{{base_url}}/api/employees/{{employee_id}}/qr",
               "host": ["{{base_url}}"],
               "path": ["api", "employees", "{{employee_id}}", "qr"]
-            }
+            },
+            "description": "Obtiene la imagen del código QR del empleado"
           }
         },
         {
@@ -952,17 +1034,18 @@
               "raw": "{{base_url}}/api/validate-qr",
               "host": ["{{base_url}}"],
               "path": ["api", "validate-qr"]
-            }
+            },
+            "description": "Valida un token QR y retorna datos del empleado"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('QR validation status es 200', function () {",
+                  "pm.test('Status 200 OK', function () {",
                   "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
+                  "const data = pm.response.json();",
                   "pm.test('QR válido retorna datos del empleado', function () {",
                   "  pm.expect(data.data.data.employee_id).to.exist;",
                   "  pm.expect(data.data.data.employee_name).to.be.a('string');",
@@ -976,10 +1059,10 @@
       ]
     },
     {
-      "name": "8. Registros de Comidas",
+      "name": "🍽️ REGISTROS DE COMIDAS",
       "item": [
         {
-          "name": "Registrar Comida (Almuerzo)",
+          "name": "Registrar Comida",
           "request": {
             "method": "POST",
             "header": [
@@ -1004,18 +1087,19 @@
               "raw": "{{base_url}}/api/meal-logs",
               "host": ["{{base_url}}"],
               "path": ["api", "meal-logs"]
-            }
+            },
+            "description": "Registra una comida para un empleado"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Create Meal Log status es 200 o 201', function () {",
+                  "pm.test('Status 200 o 201', function () {",
                   "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
                   "});",
-                  "pm.test('Comida registrada exitosamente', function () {",
+                  "const data = pm.response.json();",
+                  "pm.test('Comida registrada', function () {",
                   "  pm.expect(data.data.data.id).to.exist;",
                   "  pm.expect(data.data.data.amount).to.equal(7.50);",
                   "});"
@@ -1043,16 +1127,17 @@
               "raw": "{{base_url}}/api/meal-logs",
               "host": ["{{base_url}}"],
               "path": ["api", "meal-logs"]
-            }
+            },
+            "description": "Obtiene todos los registros de comidas del tenant"
           }
         }
       ]
     },
     {
-      "name": "9. Reportes y Consumo",
+      "name": "📊 REPORTES Y CONSUMO",
       "item": [
         {
-          "name": "Reporte de Consumo del Empleado (Por QR)",
+          "name": "Reporte de Consumo (Por QR)",
           "request": {
             "method": "GET",
             "header": [
@@ -1069,18 +1154,19 @@
               "raw": "{{base_url}}/api/meal-logs/employee/{{employee_id}}/consumption",
               "host": ["{{base_url}}"],
               "path": ["api", "meal-logs", "employee", "{{employee_id}}", "consumption"]
-            }
+            },
+            "description": "Obtiene el reporte de consumo total de un empleado (consultable por QR)"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "const data = pm.response.json();",
-                  "pm.test('Consumption Report status es 200', function () {",
+                  "pm.test('Status 200 OK', function () {",
                   "  pm.expect(pm.response.code).to.equal(200);",
                   "});",
-                  "pm.test('Reporte debe incluir consumo total', function () {",
+                  "const data = pm.response.json();",
+                  "pm.test('Reporte incluye consumo total', function () {",
                   "  pm.expect(data.data.data.total_consumption).to.be.a('number');",
                   "  pm.expect(data.data.data.meals).to.be.an('array');",
                   "});"
@@ -1108,7 +1194,8 @@
               "raw": "{{base_url}}/api/reports/billing",
               "host": ["{{base_url}}"],
               "path": ["api", "reports", "billing"]
-            }
+            },
+            "description": "Obtiene el reporte de facturación del tenant"
           }
         }
       ]
