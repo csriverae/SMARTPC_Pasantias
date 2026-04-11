@@ -2,17 +2,25 @@
 
 import { useState, useEffect } from 'react'
 import api from '@/utils/api'
+import { Button, Badge } from '@/components/ui/Button'
+import { Card, CardHeader, CardBody, CardFooter } from '@/components/ui/Card'
+import { TextField, SelectField } from '@/components/ui/Form'
+import { Alert } from '@/components/ui/Alert'
+import { Modal, ConfirmDialog } from '@/components/ui/Modal'
 
 export default function EmployeesPage() {
   const [employees, setEmployees] = useState([])
   const [companies, setCompanies] = useState([])
   const [loading, setLoading] = useState(true)
   const [showForm, setShowForm] = useState(false)
-  const [formData, setFormData] = useState({ name: '', email: '', company_id: '' })
-  const [error, setError] = useState('')
+  const [showQR, setShowQR] = useState({ show: false, employee: null, imageUrl: null })
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [selectedEmployee, setSelectedEmployee] = useState(null)
   const [copiedToken, setCopiedToken] = useState(null)
-  const [qrModal, setQrModal] = useState({ show: false, employee: null, imageUrl: null })
-  const [deleteConfirm, setDeleteConfirm] = useState({ show: false, employee: null })
+  const [formData, setFormData] = useState({ name: '', email: '', company_id: '' })
+  const [errors, setErrors] = useState({})
+  const [message, setMessage] = useState(null)
+  const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
     loadData()
@@ -28,24 +36,62 @@ export default function EmployeesPage() {
       setCompanies(compRes.data.data || [])
     } catch (error) {
       console.error('Error loading data:', error)
-      setError('Error cargando datos')
+      setMessage({ type: 'error', text: 'Error cargando datos' })
     } finally {
       setLoading(false)
     }
   }
 
+  const validateForm = () => {
+    const newErrors = {}
+    if (!formData.name.trim()) newErrors.name = 'El nombre es requerido'
+    if (!formData.email.trim()) newErrors.email = 'El email es requerido'
+    if (!formData.company_id) newErrors.company_id = 'La empresa es requerida'
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
+    if (!validateForm()) return
+
     try {
-      setError('')
-      await api.post('/api/employees', formData)
+      setSubmitting(true)
+      await api.post('/api/employees', {
+        ...formData,
+        company_id: parseInt(formData.company_id)
+      })
+      setMessage({ type: 'success', text: 'Empleado creado exitosamente' })
       setFormData({ name: '', email: '', company_id: '' })
       setShowForm(false)
       loadData()
     } catch (error) {
       console.error('Error creating employee:', error)
-      setError(error.response?.data?.message || 'Error creando empleado')
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || 'Error creando empleado'
+      })
+    } finally {
+      setSubmitting(false)
     }
+  }
+
+  const handleShowQR = async (employee) => {
+    try {
+      const response = await api.get(`/api/employees/${employee.id}/qr`, { responseType: 'blob' })
+      const imageUrl = URL.createObjectURL(response.data)
+      setShowQR({ show: true, employee, imageUrl })
+    } catch (error) {
+      console.error('Error fetching QR:', error)
+      setMessage({ type: 'error', text: 'Error cargando QR' })
+    }
+  }
+
+  const handleCloseQR = () => {
+    if (showQR.imageUrl) {
+      URL.revokeObjectURL(showQR.imageUrl)
+    }
+    setShowQR({ show: false, employee: null, imageUrl: null })
   }
 
   const copyToClipboard = (token) => {
@@ -54,220 +100,222 @@ export default function EmployeesPage() {
     setTimeout(() => setCopiedToken(null), 2000)
   }
 
-  const showQR = async (employee) => {
-    try {
-      const response = await api.get(`/api/employees/${employee.id}/qr`, { responseType: 'blob' })
-      const imageUrl = URL.createObjectURL(response.data)
-      setQrModal({ show: true, employee, imageUrl })
-    } catch (error) {
-      console.error('Error fetching QR:', error)
-      setError('Error cargando QR')
-    }
-  }
-
-  const closeQRModal = () => {
-    if (qrModal.imageUrl) {
-      URL.revokeObjectURL(qrModal.imageUrl)
-    }
-    setQrModal({ show: false, employee: null, imageUrl: null })
-  }
-
   const confirmDelete = (employee) => {
-    setDeleteConfirm({ show: true, employee })
+    setSelectedEmployee(employee)
+    setShowDeleteDialog(true)
   }
 
   const handleDelete = async () => {
-    if (!deleteConfirm.employee) return
+    if (!selectedEmployee) return
 
     try {
-      setError('')
-      await api.delete(`/api/employees/${deleteConfirm.employee.id}`)
-      setDeleteConfirm({ show: false, employee: null })
+      setSubmitting(true)
+      await api.delete(`/api/employees/${selectedEmployee.id}`)
+      setMessage({ type: 'success', text: 'Empleado eliminado exitosamente' })
+      setShowDeleteDialog(false)
       loadData()
     } catch (error) {
       console.error('Error deleting employee:', error)
-      setError(error.response?.data?.message || 'Error eliminando empleado')
+      setMessage({
+        type: 'error',
+        text: error.response?.data?.message || 'Error eliminando empleado'
+      })
+    } finally {
+      setSubmitting(false)
     }
   }
 
-  if (loading) {
-    return <div className='p-6'>Cargando empleados...</div>
-  }
-
   return (
-    <div className='p-6'>
-      <div className='flex justify-between items-center mb-6'>
-        <h1 className='text-3xl font-bold'>Empleados</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className='bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700'
+    <div className='p-6 sm:p-8'>
+      {/* Header */}
+      <div className='flex justify-between items-center mb-8'>
+        <div>
+          <h1 className='text-3xl font-bold text-gray-900'>Empleados</h1>
+          <p className='text-gray-600 mt-2'>Gestiona los empleados de las empresas registradas</p>
+        </div>
+        <Button
+          variant='primary'
+          onClick={() => {
+            setShowForm(!showForm)
+            setErrors({})
+          }}
         >
-          {showForm ? 'Cancelar' : 'Nuevo Empleado'}
-        </button>
+          {showForm ? '✕ Cancelar' : '+ Nuevo Empleado'}
+        </Button>
       </div>
 
-      {error && (
-        <div className='bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4'>
-          {error}
+      {/* Messages */}
+      {message && (
+        <div className='mb-6'>
+          <Alert
+            type={message.type}
+            message={message.text}
+            onClose={() => setMessage(null)}
+          />
         </div>
       )}
 
-      {showForm && (
-        <div className='bg-white p-6 rounded-lg shadow-md mb-6'>
-          <h2 className='text-xl font-semibold mb-4'>Crear Nuevo Empleado</h2>
-          <form onSubmit={handleSubmit} className='space-y-4'>
-            <div>
-              <label className='block text-sm font-medium mb-1'>Nombre</label>
-              <input
-                type='text'
-                value={formData.name}
-                onChange={(e) => setFormData({...formData, name: e.target.value})}
-                className='w-full p-2 border rounded-lg'
-                required
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium mb-1'>Email</label>
-              <input
-                type='email'
-                value={formData.email}
-                onChange={(e) => setFormData({...formData, email: e.target.value})}
-                className='w-full p-2 border rounded-lg'
-                required
-              />
-            </div>
-            <div>
-              <label className='block text-sm font-medium mb-1'>Empresa</label>
-              <select
-                value={formData.company_id}
-                onChange={(e) => setFormData({...formData, company_id: e.target.value})}
-                className='w-full p-2 border rounded-lg'
-                required
-              >
-                <option value=''>Seleccionar empresa</option>
-                {companies.map(c => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
-                ))}
-              </select>
-            </div>
-            <button
+      {/* Form Modal */}
+      <Modal
+        isOpen={showForm}
+        onClose={() => setShowForm(false)}
+        title='Crear Nuevo Empleado'
+        size='md'
+      >
+        <form onSubmit={handleSubmit} className='space-y-4'>
+          <TextField
+            label='Nombre Completo'
+            name='name'
+            value={formData.name}
+            onChange={(e) => setFormData({...formData, name: e.target.value})}
+            error={errors.name}
+            required
+            placeholder='Ej: Juan Pérez'
+          />
+          <TextField
+            label='Email'
+            name='email'
+            type='email'
+            value={formData.email}
+            onChange={(e) => setFormData({...formData, email: e.target.value})}
+            error={errors.email}
+            required
+            placeholder='juan@example.com'
+          />
+          <SelectField
+            label='Empresa'
+            name='company_id'
+            value={formData.company_id}
+            onChange={(e) => setFormData({...formData, company_id: e.target.value})}
+            options={companies.map(c => ({ value: c.id, label: c.name }))}
+            error={errors.company_id}
+            required
+          />
+          <div className='flex gap-3 justify-end pt-4'>
+            <Button
+              variant='secondary'
+              onClick={() => setShowForm(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              variant='primary'
               type='submit'
-              className='bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 w-full'
+              loading={submitting}
             >
               Crear Empleado
-            </button>
-          </form>
+            </Button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Loading State */}
+      {loading ? (
+        <div className='text-center py-12'>
+          <div className='inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4'></div>
+          <p className='text-gray-600'>Cargando empleados...</p>
         </div>
-      )}
-
-      <div className='bg-white rounded-lg shadow-md'>
-        <div className='p-6'>
-          <h2 className='text-xl font-semibold mb-4'>Lista de Empleados</h2>
-          {employees.length === 0 ? (
-            <p className='text-gray-500'>No hay empleados registrados</p>
-          ) : (
-            <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4'>
-              {employees.map(employee => (
-                <div key={employee.id} className='border-2 rounded-lg p-4 hover:shadow-lg transition-shadow'>
-                  <h3 className='font-semibold text-lg'>{employee.name}</h3>
-                  <p className='text-sm text-gray-600 mb-2'>Email: {employee.email}</p>
-                  <p className='text-sm text-gray-600 mb-3'>Empresa: {companies.find(c => c.id === employee.company_id)?.name || 'N/A'}</p>
-                  
-                  <div className='bg-gray-50 rounded p-3 mb-3'>
-                    <p className='text-xs font-medium text-gray-600 mb-1'>Token QR:</p>
-                    <div className='flex items-center gap-2'>
-                      <code className='text-xs font-mono font-bold text-blue-600 flex-1'>
-                        {employee.qr_token}
-                      </code>
-                      <button
-                        onClick={() => copyToClipboard(employee.qr_token)}
-                        className='text-xs bg-indigo-100 text-indigo-700 px-2 py-1 rounded hover:bg-indigo-200 transition-colors'
-                      >
-                        {copiedToken === employee.qr_token ? '✓ Copiado' : 'Copiar'}
-                      </button>
-                      <button
-                        onClick={() => showQR(employee)}
-                        className='text-xs bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200 transition-colors'
-                      >
-                        Ver QR
-                      </button>
-                    </div>
+      ) : employees.length === 0 ? (
+        <Card>
+          <CardBody className='text-center py-12'>
+            <p className='text-gray-400 text-4xl mb-4'>👨‍💼</p>
+            <p className='text-gray-600 mb-4'>No hay empleados registrados</p>
+            <Button variant='primary' onClick={() => setShowForm(true)}>
+              Crear primer empleado
+            </Button>
+          </CardBody>
+        </Card>
+      ) : (
+        <div className='grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6'>
+          {employees.map(employee => (
+            <Card key={employee.id} className='hover:shadow-md transition-shadow flex flex-col'>
+              <CardHeader className='border-b'>
+                <div className='flex items-start justify-between'>
+                  <div className='flex-1'>
+                    <h3 className='text-lg font-semibold text-gray-900'>{employee.name}</h3>
+                    <p className='text-sm text-gray-500 mt-1'>{employee.email}</p>
                   </div>
-
-                  <div className='text-xs text-gray-500 space-y-1'>
-                    <p>ID: {employee.id}</p>
-                    <div className='flex gap-2 mt-2'>
-                      <button
-                        onClick={() => confirmDelete(employee)}
-                        className='text-xs bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200 transition-colors'
+                  <Badge variant='success' size='sm'>Activo</Badge>
+                </div>
+              </CardHeader>
+              <CardBody className='flex-1 space-y-4'>
+                <div>
+                  <p className='text-xs text-gray-500 uppercase tracking-wide'>Empresa</p>
+                  <p className='text-gray-900 font-medium'>{companies.find(c => c.id === employee.company_id)?.name || 'N/A'}</p>
+                </div>
+                <div>
+                  <p className='text-xs text-gray-500 uppercase tracking-wide mb-2'>Token QR</p>
+                  <div className='space-y-2'>
+                    <div className='bg-gray-50 p-2 rounded border border-gray-200 break-all'>
+                      <code className='text-xs font-mono text-blue-600'>{employee.qr_token}</code>
+                    </div>
+                    <div className='flex gap-2'>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        fullWidth
+                        onClick={() => copyToClipboard(employee.qr_token)}
                       >
-                        Eliminar
-                      </button>
+                        {copiedToken === employee.qr_token ? '✓' : '📋'} Copiar
+                      </Button>
+                      <Button
+                        variant='ghost'
+                        size='sm'
+                        fullWidth
+                        onClick={() => handleShowQR(employee)}
+                      >
+                        📱 QR
+                      </Button>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-          )}
+              </CardBody>
+              <CardFooter>
+                <Button
+                  variant='danger'
+                  size='sm'
+                  fullWidth
+                  onClick={() => confirmDelete(employee)}
+                >
+                  🗑️ Eliminar
+                </Button>
+              </CardFooter>
+            </Card>
+          ))}
         </div>
-      </div>
+      )}
 
       {/* QR Modal */}
-      {qrModal.show && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4'>
-            <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-lg font-semibold'>QR de {qrModal.employee?.name}</h3>
-              <button
-                onClick={closeQRModal}
-                className='text-gray-500 hover:text-gray-700 text-xl'
-              >
-                ×
-              </button>
-            </div>
-            {qrModal.imageUrl && (
-              <div className='flex justify-center'>
-                <img src={qrModal.imageUrl} alt='QR Code' className='max-w-full h-auto' />
-              </div>
-            )}
+      <Modal
+        isOpen={showQR.show}
+        onClose={handleCloseQR}
+        title={`Código QR - ${showQR.employee?.name}`}
+        size='sm'
+      >
+        {showQR.imageUrl && (
+          <div className='text-center'>
+            <img src={showQR.imageUrl} alt='QR Code' className='mx-auto mb-4' />
+            <p className='text-sm text-gray-600 mb-4'>{showQR.employee?.qr_token}</p>
+            <Button
+              variant='primary'
+              fullWidth
+              onClick={() => copyToClipboard(showQR.employee?.qr_token)}
+            >
+              Copiar Token
+            </Button>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirm.show && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50'>
-          <div className='bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4'>
-            <div className='flex justify-between items-center mb-4'>
-              <h3 className='text-lg font-semibold text-red-600'>Confirmar Eliminación</h3>
-              <button
-                onClick={() => setDeleteConfirm({ show: false, employee: null })}
-                className='text-gray-500 hover:text-gray-700 text-xl'
-              >
-                ×
-              </button>
-            </div>
-            <p className='text-gray-700 mb-4'>
-              ¿Estás seguro de que quieres eliminar al empleado <strong>{deleteConfirm.employee?.name}</strong>?
-              Esta acción no se puede deshacer.
-            </p>
-            <div className='flex gap-3'>
-              <button
-                onClick={() => setDeleteConfirm({ show: false, employee: null })}
-                className='flex-1 bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300'
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={handleDelete}
-                className='flex-1 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700'
-              >
-                Eliminar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Delete Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={showDeleteDialog}
+        onClose={() => setShowDeleteDialog(false)}
+        onConfirm={handleDelete}
+        title='Eliminar Empleado'
+        message={`¿Estás seguro de que deseas eliminar a "${selectedEmployee?.name}"? Esta acción no se puede deshacer.`}
+        loading={submitting}
+      />
     </div>
   )
 }

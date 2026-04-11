@@ -9,6 +9,7 @@ export default function DashboardLayout({ children }) {
   const pathname = usePathname()
   const router = useRouter()
   const [isOpen, setIsOpen] = useState(true)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const { user, loading } = useAuthUser()
 
   useEffect(() => {
@@ -31,45 +32,75 @@ export default function DashboardLayout({ children }) {
     return pathname === href || pathname.endsWith(href)
   }
 
-  const menuItems = [
-    { title: 'Inicio', href: '/home', icon: '🏠' },
-    { title: 'Perfil', href: '/profile', icon: '👤' },
-    { title: 'Configuración', href: '/settings', icon: '⚙️' },
-    { title: 'Empresas', href: '/tenants', icon: '🏢' },
-    { title: 'Usuarios', href: '/users', icon: '👥', roles: ['admin'] },
-    { title: 'Empleados', href: '/employees', icon: '👨‍💼' },
-    { title: 'Acuerdos', href: '/agreements', icon: '📋' },
-    { title: 'Consumos', href: '/meal-logs', icon: '🥘' },
-    { title: 'Reportes', href: '/reports', icon: '📊' },
-    { title: 'Ayuda', href: '/faq', icon: '❓' },
+  const menuGroups = [
+    {
+      label: 'Principal',
+      items: [
+        { title: 'Dashboard', href: '/home', icon: '📊' },
+        { title: 'Perfil', href: '/profile', icon: '👤' }
+      ]
+    },
+    {
+      label: 'Operaciones',
+      items: [
+        { title: 'Empresas', href: '/companies', icon: '🏢' },
+        { title: 'Restaurantes', href: '/restaurants', icon: '🍽️' },
+        { title: 'Empleados', href: '/employees', icon: '👨‍💼' },
+        { title: 'Acuerdos', href: '/agreements', icon: '📋' }
+      ]
+    },
+    {
+      label: 'Gestión',
+      items: [
+        { title: 'Usuarios', href: '/users', icon: '👥', roles: ['admin'] },
+        { title: 'Registros de Consumo', href: '/meal-logs', icon: '🍴' },
+        { title: 'Reportes', href: '/reports', icon: '📈' }
+      ]
+    },
+    {
+      label: 'Soporte',
+      items: [
+        { title: 'Centro de Ayuda', href: '/faq', icon: '❓' },
+        { title: 'Configuración', href: '/settings', icon: '⚙️' }
+      ]
+    }
   ]
 
-  const filteredMenuItems = user
-    ? menuItems.filter((item) => !item.roles || item.roles.includes(user.role))
-    : []
+  const handleLogout = () => {
+    localStorage.removeItem('token')
+    localStorage.removeItem('tenant_id')
+    localStorage.removeItem('user')
+    router.push('/login')
+  }
 
   if (loading) {
     return (
-      <div className='flex items-center justify-center min-h-screen'>
-        <div className='text-slate-600'>Cargando información del usuario...</div>
+      <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-indigo-50 to-blue-50'>
+        <div className='text-center'>
+          <div className='inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mb-4'></div>
+          <p className='text-gray-600'>Cargando información del usuario...</p>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className='flex bg-slate-50 min-h-screen'>
+    <div className='flex bg-gray-50 min-h-screen'>
       {/* Fixed Sidebar */}
-      <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-slate-200 transition-all duration-300 flex flex-col shadow-lg z-40 ${
+      <aside className={`fixed left-0 top-0 h-screen bg-gradient-to-b from-indigo-600 to-indigo-700 transition-all duration-300 flex flex-col shadow-xl z-40 ${
         isOpen ? 'w-64' : 'w-20'
       }`}>
         {/* Logo Header */}
-        <div className='flex items-center justify-between p-4 border-b border-slate-200'>
+        <div className='flex items-center justify-between p-4 border-b border-indigo-500'>
           {isOpen && (
-            <h1 className='text-xl font-bold text-indigo-600'>MesaPass</h1>
+            <div className='flex items-center gap-2'>
+              <div className='text-2xl'>🍽️</div>
+              <h1 className='text-xl font-bold text-white'>MesaPass</h1>
+            </div>
           )}
           <button
             onClick={() => setIsOpen(!isOpen)}
-            className='p-2 hover:bg-slate-100 rounded-lg transition-colors ml-auto'
+            className='p-2 hover:bg-indigo-500 rounded-lg transition-colors text-white'
             title={isOpen ? 'Collapse sidebar' : 'Expand sidebar'}
           >
             {isOpen ? '◀' : '▶'}
@@ -77,38 +108,59 @@ export default function DashboardLayout({ children }) {
         </div>
 
         {/* Navigation Menu */}
-        <nav className='flex-1 p-4 space-y-2'>
-          {filteredMenuItems.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                isActive(item.href)
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'text-slate-700 hover:bg-slate-100'
-              }`}
-              title={!isOpen ? item.title : ''}
-            >
-              <span className='text-xl flex-shrink-0'>{item.icon}</span>
-              {isOpen && <span className='font-medium'>{item.title}</span>}
-            </Link>
+        <nav className='flex-1 p-3 space-y-2 overflow-y-auto'>
+          {menuGroups.map((group) => (
+            <div key={group.label}>
+              {isOpen && (
+                <h3 className='text-xs font-semibold text-indigo-200 uppercase tracking-wider px-4 py-2 mt-4 first:mt-0'>
+                  {group.label}
+                </h3>
+              )}
+              <div className='space-y-1'>
+                {group.items.map((item) => {
+                  if (item.roles && !item.roles.includes(user?.role)) return null
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isActive(item.href)
+                          ? 'bg-white text-indigo-600 shadow-lg font-semibold'
+                          : 'text-indigo-100 hover:bg-indigo-500 hover:text-white'
+                      }`}
+                      title={!isOpen ? item.title : ''}
+                    >
+                      <span className='text-lg flex-shrink-0'>{item.icon}</span>
+                      {isOpen && <span className='text-sm font-medium'>{item.title}</span>}
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
           ))}
         </nav>
 
         {/* Divider */}
-        <div className='border-t border-slate-200'></div>
+        <div className='border-t border-indigo-500'></div>
 
-        {/* Exit Button */}
-        <div className='p-4'>
+        {/* User Section & Exit Button */}
+        <div className='p-4 space-y-3'>
+          {isOpen && (
+            <div className='bg-indigo-500 rounded-lg p-3'>
+              <p className='text-xs text-indigo-100 uppercase font-semibold'>Usuario actual</p>
+              <p className='text-white font-semibold truncate'>{user?.email}</p>
+              <p className='text-xs text-indigo-100 capitalize'>{user?.role || 'Employee'}</p>
+            </div>
+          )}
           <button
-            onClick={() => router.push('/')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-50 text-red-700 hover:bg-red-100 transition-colors font-medium ${
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors font-medium ${
               !isOpen ? 'justify-center' : ''
             }`}
-            title={!isOpen ? 'Salir' : ''}
+            title={!isOpen ? 'Cerrar sesión' : ''}
           >
             <span className='text-xl flex-shrink-0'>🚪</span>
-            {isOpen && <span>Salir</span>}
+            {isOpen && <span>Cerrar sesión</span>}
           </button>
         </div>
       </aside>
