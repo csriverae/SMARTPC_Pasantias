@@ -153,3 +153,43 @@ class MealLogService:
             "remaining": remaining,
             "exceeded": daily_total > MealLogService.DAILY_LIMIT
         }
+    
+    @staticmethod
+    def get_employee_consumption_report(db: Session, employee_id: int, tenant_id: UUID, start_date: date = None, end_date: date = None):
+        """Get consumption report for specific employee"""
+        # Get meal logs for the employee within the date range
+        query = db.query(MealLog).filter(
+            MealLog.employee_id == employee_id,
+            MealLog.tenant_id == tenant_id
+        )
+        
+        if start_date:
+            query = query.filter(MealLog.date >= start_date)
+        
+        if end_date:
+            query = query.filter(MealLog.date <= end_date)
+        
+        meal_logs = query.order_by(MealLog.date.desc()).all()
+        
+        # Calculate totals
+        total_consumption = sum(log.total_amount for log in meal_logs)
+        total_transactions = len(meal_logs)
+        average_transaction = total_consumption / total_transactions if total_transactions > 0 else 0
+        
+        # Format meal logs for response
+        formatted_logs = []
+        for log in meal_logs:
+            formatted_logs.append({
+                "id": log.id,
+                "date": str(log.date),
+                "meal_type": log.meal_type,
+                "total_amount": log.total_amount,
+                "agreement_id": log.agreement_id
+            })
+        
+        return {
+            "total_consumption": total_consumption,
+            "total_transactions": total_transactions,
+            "average_transaction": average_transaction,
+            "meal_logs": formatted_logs
+        }

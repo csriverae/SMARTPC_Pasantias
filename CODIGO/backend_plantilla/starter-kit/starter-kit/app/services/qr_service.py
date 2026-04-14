@@ -61,6 +61,24 @@ class QRService:
         return qr_image_bytes
     
     @staticmethod
+    def get_qr_code_base64(employee_id: int, qr_token: str) -> str:
+        """Generate QR code as base64 string"""
+        try:
+            qr_image_bytes = QRService.generate_qr_image(employee_id, qr_token)
+            qr_base64 = base64.b64encode(qr_image_bytes).decode('utf-8')
+            return qr_base64
+        except Exception as e:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"Error generating QR base64: {str(e)}"
+            )
+    
+    @staticmethod
+    def get_qr_code_text(employee_id: int, qr_token: str) -> str:
+        """Get QR code data as text (what's encoded in the QR)"""
+        return f"employee:{employee_id}:token:{qr_token}"
+    
+    @staticmethod
     def validate_qr_token(db: Session, qr_token: str, tenant_id: UUID):
         """Validate QR token"""
         employee = db.query(Employee).filter(Employee.qr_token == qr_token).first()

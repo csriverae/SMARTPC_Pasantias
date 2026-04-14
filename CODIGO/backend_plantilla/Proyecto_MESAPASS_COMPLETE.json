@@ -1099,6 +1099,97 @@
               }
             }
           ]
+        },
+        {
+          "name": "Generar QR Code (Base64 + Texto)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/generate-qr-code/{{employee_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "generate-qr-code", "{{employee_id}}"]
+            },
+            "description": "Genera el código QR del empleado en formato base64 + texto legible para usar en JSON/Frontend"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test('QR code en base64 y texto', function () {",
+                  "  pm.expect(data.data.data.qr_code_base64).to.exist;",
+                  "  pm.expect(data.data.data.qr_code_base64).to.include('data:image/png;base64,');",
+                  "  pm.expect(data.data.data.qr_code_text).to.exist;",
+                  "  pm.expect(data.data.data.qr_code_text).to.match(/employee:\\d+:token:.+/);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Validar QR + Generar Código (Base64 + Texto)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"qr_token\": \"{{qr_token}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/validate-qr-string",
+              "host": ["{{base_url}}"],
+              "path": ["api", "validate-qr-string"]
+            },
+            "description": "Valida el QR y genera el código en formato base64 + texto. Todo en una sola petición"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status 200 OK', function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "const data = pm.response.json();",
+                  "pm.test('QR validado y código generado', function () {",
+                  "  pm.expect(data.data.data.employee_id).to.exist;",
+                  "  pm.expect(data.data.data.qr_code_base64).to.exist;",
+                  "  pm.expect(data.data.data.qr_code_text).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
         }
       ]
     },
@@ -1125,27 +1216,28 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"employee_id\": \"{{employee_id}}\",\n  \"restaurant_id\": \"{{restaurant_id}}\",\n  \"agreement_id\": \"{{agreement_id}}\",\n  \"meal_type\": \"Lunch\",\n  \"meal_date\": \"2026-04-10\",\n  \"amount\": 7.50,\n  \"notes\": \"Almuerzo del día\"\n}"
+              "raw": "{\n  \"employee_id\": {{employee_id}},\n  \"agreement_id\": {{agreement_id}},\n  \"meal_type\": \"Lunch\",\n  \"total_amount\": 7.50\n}"
             },
             "url": {
               "raw": "{{base_url}}/api/meal-logs",
               "host": ["{{base_url}}"],
               "path": ["api", "meal-logs"]
             },
-            "description": "Registra una comida para un empleado"
+            "description": "Registra una comida para un empleado. Campos requeridos: employee_id, agreement_id, meal_type, total_amount"
           },
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test('Status 200 o 201', function () {",
-                  "  pm.expect(pm.response.code).to.be.oneOf([200, 201]);",
+                  "pm.test('Status 201 Created', function () {",
+                  "  pm.expect(pm.response.code).to.equal(201);",
                   "});",
                   "const data = pm.response.json();",
-                  "pm.test('Comida registrada', function () {",
+                  "pm.test('Comida registrada correctamente', function () {",
                   "  pm.expect(data.data.data.id).to.exist;",
-                  "  pm.expect(data.data.data.amount).to.equal(7.50);",
+                  "  pm.expect(data.data.data.total_amount).to.equal(7.50);",
+                  "  pm.expect(data.data.data.meal_type).to.equal('Lunch');",
                   "});"
                 ],
                 "type": "text/javascript"

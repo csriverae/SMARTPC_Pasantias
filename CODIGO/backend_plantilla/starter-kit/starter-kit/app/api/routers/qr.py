@@ -137,3 +137,144 @@ def validate_qr(
                 "data": {"data": None}
             }
         )
+
+
+@router.get("/generate-qr-code/{employee_id}", tags=["QR"])
+def generate_qr_code(
+    employee_id: int,
+    current_user=Depends(get_current_user),
+    tenant_id: UUID = Depends(get_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Generate QR code as base64 string (for use in JSON/frontend)
+    Headers required: Authorization: Bearer <token>, X-Tenant-ID: <tenant_id>
+    """
+    try:
+        from app.models.employee import Employee
+        
+        employee = db.query(Employee).filter(Employee.id == employee_id).first()
+        
+        if not employee:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Empleado no encontrado"
+            )
+        
+        if employee.company_tenant_id != tenant_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Acceso denegado"
+            )
+        
+        # Generate QR code as base64
+        qr_base64 = QRService.get_qr_code_base64(employee.id, employee.qr_token)
+        qr_text = QRService.get_qr_code_text(employee.id, employee.qr_token)
+        
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "QR code generado exitosamente",
+                "status": 200,
+                "error": False,
+                "data": {
+                    "data": {
+                        "employee_id": employee.id,
+                        "employee_name": employee.name,
+                        "employee_email": employee.email,
+                        "qr_token": employee.qr_token,
+                        "company_id": employee.company_id,
+                        "qr_code_base64": f"data:image/png;base64,{qr_base64}",
+                        "qr_code_text": qr_text
+                    }
+                }
+            }
+        )
+    
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "message": e.detail,
+                "status": e.status_code,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+    
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": f"Error generando QR: {str(e)}",
+                "status": 500,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+
+
+@router.post("/validate-qr-string", tags=["QR"])
+def validate_qr_string(
+    qr_data: QRValidateRequest,
+    current_user=Depends(get_current_user),
+    tenant_id: UUID = Depends(get_tenant_id),
+    db: Session = Depends(get_db)
+):
+    """
+    Validate QR token and return QR code in multiple formats (base64 + text)
+    Headers required: Authorization: Bearer <token>, X-Tenant-ID: <tenant_id>
+    Body: {\"qr_token\": \"token_value\"}
+    """
+    try:
+        employee = QRService.validate_qr_token(
+            db=db,
+            qr_token=qr_data.qr_token,
+            tenant_id=tenant_id
+        )
+
+        # Generate QR code as base64
+        qr_base64 = QRService.get_qr_code_base64(employee.id, employee.qr_token)
+        qr_text = QRService.get_qr_code_text(employee.id, employee.qr_token)
+
+        return JSONResponse(
+            status_code=200,
+            content={
+                "message": "QR válido y generado exitosamente",
+                "status": 200,
+                "error": False,
+                "data": {
+                    "data": {
+                        "employee_id": employee.id,
+                        "employee_name": employee.name,
+                        "employee_email": employee.email,
+                        "qr_token": employee.qr_token,
+                        "company_id": employee.company_id,
+                        "qr_code_base64": f"data:image/png;base64,{qr_base64}",
+                        "qr_code_text": qr_text
+                    }
+                }
+            }
+        )
+
+    except HTTPException as e:
+        return JSONResponse(
+            status_code=e.status_code,
+            content={
+                "message": e.detail,
+                "status": e.status_code,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
+
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={
+                "message": f"Error validando QR: {str(e)}",
+                "status": 500,
+                "error": True,
+                "data": {"data": None}
+            }
+        )
