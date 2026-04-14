@@ -623,6 +623,28 @@
             },
             "description": "Obtiene todas las empresas del tenant"
           }
+        },
+        {
+          "name": "Obtener Empresa por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/companies/{{company_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "companies", "{{company_id}}"]
+            },
+            "description": "Obtiene una empresa específica del tenant"
+          }
         }
       ]
     },
@@ -797,6 +819,28 @@
               "path": ["api", "restaurants"]
             },
             "description": "Obtiene todos los restaurantes del tenant"
+          }
+        },
+        {
+          "name": "Obtener Restaurante por ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              },
+              {
+                "key": "X-Tenant-ID",
+                "value": "{{tenant_id}}"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/api/restaurants/{{restaurant_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["api", "restaurants", "{{restaurant_id}}"]
+            },
+            "description": "Obtiene un restaurante específico del tenant"
           }
         }
       ]

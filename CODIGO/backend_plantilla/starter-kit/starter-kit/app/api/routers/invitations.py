@@ -6,6 +6,7 @@ from app.db.session import SessionLocal
 from app.services.invitation_service import InvitationService
 from app.core.security import get_current_user
 from pydantic import BaseModel
+from typing import Optional
 from uuid import UUID
 
 
@@ -19,7 +20,7 @@ class InvitationCreate(BaseModel):
 
 class InvitationAccept(BaseModel):
     code: str
-    password: str
+    password: Optional[str] = None
     full_name: str
 
 
@@ -114,8 +115,8 @@ def accept_invitation(
         result = InvitationService.accept_invitation(
             db=db,
             code=accept_data.code,
-            password=accept_data.password,
-            full_name=accept_data.full_name
+            full_name=accept_data.full_name,
+            password=accept_data.password
         )
         
         return JSONResponse(

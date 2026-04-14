@@ -73,7 +73,7 @@ class InvitationService:
         }
 
     @staticmethod
-    def accept_invitation(db: Session, code: str, password: str = None, full_name: str = None):
+    def accept_invitation(db: Session, code: str, full_name: str, password: str = None):
         """Accept user invitation"""
         # Find invitation
         invitation = db.query(UserInvitation).filter(
@@ -107,7 +107,7 @@ class InvitationService:
 
         # Use generated password if no password provided
         final_password = password if password else invitation.generated_password
-        final_full_name = full_name if full_name else invitation.email.split('@')[0]  # Default to email prefix
+        final_full_name = full_name  # full_name is now required
 
         # Create user
         new_user = UserService.create_user(

@@ -86,7 +86,7 @@ Aceptar una invitación y crear la cuenta de usuario.
 ```json
 {
   "code": "abc123...",
-  "password": "MiPassword123",
+  "password": "MiPassword123",  // Opcional: si no se proporciona, se usa una contraseña generada
   "full_name": "Nombre Completo"
 }
 ```

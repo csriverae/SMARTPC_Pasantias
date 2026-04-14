@@ -11,6 +11,8 @@ from app.api.routers.agreements import router as agreements_router
 from app.api.routers.meal_logs import router as meal_logs_router
 from app.api.routers.qr import router as qr_router
 from app.api.routers.reports import router as reports_router
+from app.api.routers.companies import router as companies_router
+from app.api.routers.restaurants import router as restaurants_router
 from app.api.routes.entities import router as entities_router
 from app.db.session import engine
 from app.db.base import Base
@@ -75,6 +77,8 @@ app.include_router(agreements_router, prefix="/api", tags=["agreements"])
 app.include_router(meal_logs_router, prefix="/api", tags=["meal-logs"])
 app.include_router(qr_router, prefix="/api", tags=["qr"])
 app.include_router(reports_router, prefix="/api", tags=["reports"])
+app.include_router(companies_router, prefix="/api", tags=["companies"])
+app.include_router(restaurants_router, prefix="/api", tags=["restaurants"])
 
 # Legacy routers (kept for backward compatibility during migration)
 app.include_router(entities_router, prefix="/api", tags=["entities"])

@@ -152,7 +152,7 @@ def register_owner(db: Session, email: str, password: str, full_name: str, tenan
 ```json
 {
   "code": "invitation_code_here",
-  "password": "NewPassword123",
+  "password": "NewPassword123",  // Optional: if not provided, uses generated password
   "full_name": "Invited User Name"  // ← NOW REQUIRED
 }
 ```
