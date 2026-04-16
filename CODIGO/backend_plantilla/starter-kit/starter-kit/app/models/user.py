@@ -26,3 +26,4 @@ class User(Base):
     user_tenants = relationship("UserTenant", back_populates="user")
     sent_invitations = relationship("UserInvitation", back_populates="inviter")
     password_resets = relationship("PasswordReset", back_populates="user")
+    device_sessions = relationship("DeviceSession", back_populates="user", cascade="all, delete-orphan")

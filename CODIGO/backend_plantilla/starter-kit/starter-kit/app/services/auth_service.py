@@ -184,3 +184,106 @@ class AuthService:
         db.commit()
 
         return {"message": "Usuario eliminado exitosamente"}
+
+    @staticmethod
+    def register_device_session(
+        db: Session,
+        user_id: int,
+        device_id: str,
+        refresh_token: str,
+        device_name: str | None = None,
+        device_type: str = "mobile",
+        os: str | None = None,
+        os_version: str | None = None,
+        app_version: str | None = None,
+        device_token: str | None = None,
+        expires_in_days: int = 30
+    ):
+        """Register a new device session for mobile app persistent login"""
+        from app.crud.device_session import create_device_session
+        
+        # Check if device already exists
+        existing_device = db.query(User).join(
+            db.models.device_session.DeviceSession
+        ).filter(
+            db.models.device_session.DeviceSession.device_id == device_id
+        ).first()
+        
+        # Create new device session
+        device_session = create_device_session(
+            db=db,
+            user_id=user_id,
+            device_id=device_id,
+            refresh_token=refresh_token,
+            device_name=device_name,
+            device_type=device_type,
+            os=os,
+            os_version=os_version,
+            app_version=app_version,
+            device_token=device_token,
+            expires_in_days=expires_in_days
+        )
+        
+        return device_session
+
+    @staticmethod
+    def validate_device_session(db: Session, device_id: str) -> dict | None:
+        """Validate if a device session is still active and valid"""
+        from app.crud.device_session import get_device_session_by_device_id, update_device_session_last_accessed
+        from app.core.security import verify_token
+        
+        device_session = get_device_session_by_device_id(db, device_id)
+        
+        if not device_session or not device_session.is_valid():
+            return None
+        
+        # Try to verify the refresh token
+        token_payload = verify_token(device_session.refresh_token)
+        if not token_payload:
+            return None
+        
+        # Update last accessed time
+        update_device_session_last_accessed(db, device_id)
+        
+        return {
+            "device_id": device_session.device_id,
+            "device_name": device_session.device_name,
+            "device_type": device_session.device_type,
+            "user_id": device_session.user_id,
+            "email": token_payload.get("sub"),
+            "refresh_token": device_session.refresh_token,
+            "last_accessed": device_session.last_accessed
+        }
+
+    @staticmethod
+    def logout_device(db: Session, device_id: str) -> bool:
+        """Logout from a specific device"""
+        from app.crud.device_session import deactivate_device_session
+        return deactivate_device_session(db, device_id)
+
+    @staticmethod
+    def logout_all_devices(db: Session, user_id: int) -> int:
+        """Logout from all devices (password change, security issue, etc.)"""
+        from app.crud.device_session import deactivate_all_user_devices
+        return deactivate_all_user_devices(db, user_id)
+
+    @staticmethod
+    def get_user_devices(db: Session, user_id: int) -> list[dict]:
+        """Get all active device sessions for a user"""
+        from app.crud.device_session import get_user_device_sessions
+        
+        devices = get_user_device_sessions(db, user_id, only_active=True)
+        
+        return [
+            {
+                "device_id": d.device_id,
+                "device_name": d.device_name,
+                "device_type": d.device_type,
+                "os": d.os,
+                "os_version": d.os_version,
+                "app_version": d.app_version,
+                "last_accessed": d.last_accessed.isoformat(),
+                "created_at": d.created_at.isoformat()
+            }
+            for d in devices
+        ]

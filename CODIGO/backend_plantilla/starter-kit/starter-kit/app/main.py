@@ -18,7 +18,7 @@ from app.db.session import engine
 from app.db.base import Base
 
 # Import models so metadata is populated before create_all
-from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog, Tenant, UserTenant  # noqa: F401
+from app.models import User, Restaurant, Company, InvitationCode, Agreement, Employee, MealLog, Tenant, UserTenant, DeviceSession  # noqa: F401
 
 
 @asynccontextmanager
