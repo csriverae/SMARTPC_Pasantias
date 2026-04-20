@@ -1,0 +1,44 @@
+[MASTER]
+ignore-patterns=test_.*?py
+extension-pkg-allow-list=sqlalchemy,pydantic
+
+[MESSAGES CONTROL]
+disable=
+    C0103,  # Invalid name
+    C0111,  # Missing docstring
+    W0702,  # Bare except
+    W1201,  # Logging format
+    R0903,  # Too few public methods
+    R0913,  # Too many arguments
+    R1705,  # Unnecessary else after return
+
+[FORMAT]
+max-line-length=120
+indent-string='    '
+
+[DESIGN]
+max-arguments=8
+max-attributes=10
+max-locals=20
+
+[VARIABLES]
+dummy-variables-rgx=_.*
+
+[BASIC]
+good-names=i,j,k,ex,Run,_
+
+[LOGGING]
+logging-format-style=new
+
+[TYPECHECK]
+# Ignore typing errors in dependencies
+ignored-modules=sqlalchemy,fastapi,pydantic
+
+[SIMILARITIES]
+ignore-comments=yes
+ignore-docstrings=yes
+min-similarity-lines=5
+
+# Ignore test files
+[REPORTS]
+output-format=parseable
