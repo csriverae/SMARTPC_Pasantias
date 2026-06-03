@@ -25,7 +25,12 @@ source .venv/bin/activate  # macOS/Linux
 pip install -r requirements.txt
 pip install pytest pytest-cov pytest-asyncio faker httpx
 pip install bandit safety pylint
-pip install sonar-scanner
+
+# Install SonarScanner (external tool, not a Python package)
+# Windows (recommended):
+#   choco install sonar-scanner
+# or install manually from https://docs.sonarqube.org/latest/analysis/scan/sonarscanner/
+# Then add the SonarScanner `bin` folder to PATH.
 ```
 
 ### 2. Run Default Test Suite
