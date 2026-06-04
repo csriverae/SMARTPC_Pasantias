@@ -168,6 +168,21 @@ export default function DashboardPage() {
     }
   }
 
+  const handleCreateEmployee = async (name: string, email: string, company_id: string) => {
+    try {
+      await axios.post(
+        `${API_BASE_URL}/api/employees`,
+        { name, email, company_id: parseInt(company_id) },
+        { headers: getHeaders() }
+      )
+      loadDashboardData()
+      setShowModal(false)
+      alert('Empleado creado exitosamente')
+    } catch (err: any) {
+      setError(err?.response?.data?.data?.detail || 'Error al crear empleado')
+    }
+  }
+
   if (loading) {
     return (
       <div className='flex items-center justify-center min-h-screen'>
@@ -379,6 +394,9 @@ export default function DashboardPage() {
             {modalType === 'restaurant' && (
               <RestaurantForm onSubmit={handleCreateRestaurant} onClose={() => setShowModal(false)} />
             )}
+            {modalType === 'employee' && (
+              <EmployeeForm companies={companies} onSubmit={handleCreateEmployee} onClose={() => setShowModal(false)} />
+            )}
           </div>
         </div>
       )}
@@ -530,6 +548,81 @@ function RestaurantForm({ onSubmit, onClose }: any) {
           className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500'
           required
         />
+      </div>
+      <div className='flex gap-2 pt-4'>
+        <button
+          type='submit'
+          disabled={submitting}
+          className='flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 font-medium transition-colors'
+        >
+          {submitting ? 'Creando...' : 'Crear'}
+        </button>
+        <button
+          type='button'
+          onClick={onClose}
+          className='flex-1 px-4 py-2 border border-slate-300 rounded-lg hover:bg-slate-50 font-medium transition-colors'
+        >
+          Cancelar
+        </button>
+      </div>
+    </form>
+  )
+}
+
+function EmployeeForm({ companies, onSubmit, onClose }: any) {
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [companyId, setCompanyId] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (name && email && companyId) {
+      setSubmitting(true)
+      await onSubmit(name, email, companyId)
+      setSubmitting(false)
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className='space-y-4'>
+      <div>
+        <label className='block text-sm font-medium text-slate-700 mb-1'>Nombre Completo</label>
+        <input
+          type='text'
+          placeholder='Ej: Juan Pérez'
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500'
+          required
+        />
+      </div>
+      <div>
+        <label className='block text-sm font-medium text-slate-700 mb-1'>Email</label>
+        <input
+          type='email'
+          placeholder='juan@empresa.com'
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500'
+          required
+        />
+      </div>
+      <div>
+        <label className='block text-sm font-medium text-slate-700 mb-1'>Empresa</label>
+        <select
+          value={companyId}
+          onChange={(e) => setCompanyId(e.target.value)}
+          className='w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-indigo-500'
+          required
+        >
+          <option value=''>Selecciona una empresa</option>
+          {companies.map((company: any) => (
+            <option key={company.id} value={company.id}>
+              {company.name}
+            </option>
+          ))}
+        </select>
       </div>
       <div className='flex gap-2 pt-4'>
         <button
